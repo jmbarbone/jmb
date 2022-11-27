@@ -1,0 +1,39 @@
+#!/usr/bin/env -S Rscript --vanilla 
+
+requireNamespace("pak")
+msg <- function(...) message("[msg] ", ...)
+
+options(
+  pak.no_extra_messages = TRUE,
+  repos = c(CRAN = "https://cloud.r-project.org")
+)
+
+ca <- commandArgs(TRUE)
+dep <- any(grepl("^dep", ca))
+up <- any(grepl("^up", ca))
+
+msg("Checking for old packages")
+pkgs <- row.names(utils::old.packages())
+# pkgs <- setdiff(pkgs, "MASS") # current issue with MASS
+
+if ("pak" %in% pkgs) {
+  msg("You may want to call pak-install")
+  pkgs <- setdiff(pkgs, "pak")
+}
+
+msg("Old packages found: ", length(pkgs))
+# pak::pkg_install(paste0("any::", pkgs, "?reinstall"), dependencies = dep)
+res <- try(pak::pak(pkgs, upgrade = up, dependencies = dep))
+
+if (inherits(res, "try-error")) {
+  for (pkg in pkgs) {
+    msg("Installing ", pkg)
+    try(pak::pak(pkg, upgrade = up, dependencies = dep))
+  }
+}
+
+msg("Meta update")
+pak::meta_update()
+
+msg("Clean up cache")
+pak::pak_cleanup(force = TRUE)

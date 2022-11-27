@@ -1,0 +1,85 @@
+#!/usr/bin/env -S Rscript --vanilla 
+# Find and open an Rproj files
+# 
+# This assumes either $R_USER or $HOME/Documents have Bitbucket or Github
+# folders.  This also only searches for the matching $1.Rproj file -- ignores
+# whatever the folder name may be.
+
+stopifnot(
+  requireNamespace("fs", quietly = TRUE),
+  requireNamespace("rstudioapi", quietly = TRUE),
+  requireNamespace("mark", quietly = TRUE),
+  requireNamespace("fuj", quietly = TRUE),
+  TRUE
+)
+
+args <- commandArgs(TRUE)
+verbose <- identical(args[2], "verbose")
+msg <- if (verbose) {
+  # 24 is currently the longest message...
+  function(x, ...)  message("i ", format(x, width = 24), ...)
+} else {
+  function(...) invisible()
+}
+
+# TODO better check for missing parameters
+homedir <- Sys.getenv("GH_HOME", Sys.getenv("R_USER", Sys.getenv("HOME")))
+homedir <- fs::path_norm(homedir)
+
+if (!fs::dir_exists(homedir)) {
+  stop("Home directory does not exist: ", homedir)
+}
+
+msg("Using home directory: ", homedir)
+setwd(homedir)
+
+name <- args[1]
+reg <- sprintf(".*%s(\\.Rproj)?$", args[1])
+msg("Searching with regex:   ", reg)
+
+found <- fs::dir_ls(regexp = reg, recurse = 3, type = c("file", "directory"))
+found <- found[mark::file_name(tolower(found)) == tolower(name)]
+
+n <- length(found)
+
+if (n == 0L) {
+  stop("no ", name, " found")
+}
+
+dirs <- fs::is_dir(found)
+found <- c(
+  found[!dirs],
+  unlist(lapply(found[dirs], fs::dir_ls, glob = "*.Rproj", type = "directory"))
+)
+
+if (length(found) > 1L) {
+  msg(
+    "Found multiple matches: ", toString(found),
+    "Only using first"
+  )
+}
+
+found <- found[1]
+
+if (fs::is_dir(found)) {
+  found <- fs::dir_ls(found, glob = "*.Rproj", type = "file")[1]
+}
+
+found <- fs::path_norm(found)
+
+if ("--code" %in% args) {
+  found <- dirname(found[1])
+  msg("Trying to open: ", found)
+  system2("code", found[1], wait = FALSE)
+} else {
+  msg("Trying to open: ", found[1])
+  if (fuj::is_windows()) {
+    system2("sh", c("start", found[1]), wait = FALSE)
+  } else if (fuj::is_linux()) {
+    # not sure if this will work
+    # system2("xdg-open", found[1], env = c(QT_QPA_PLATFORM = "xcb"), wait = FALSE)
+    system2("xdg-open", found[1], wait = FALSE)
+  }
+}
+
+quit()

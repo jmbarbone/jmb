@@ -1,0 +1,32 @@
+#!/usr/bin/env -S Rscript --vanilla 
+
+options(pak.no_extra_messages = TRUE)
+
+msg <- function(...) message("[msg] ", ...)
+
+ca <- commandArgs(TRUE)
+n <- length(ca)
+
+if (n == 0) {
+  ca <- "cran"
+}
+
+if (n > 1) {
+  warning("Only the first argument is used")
+  ca <- ca[1]
+}
+
+repo <- switch(
+  ca,
+  cran = c(CRAN = "https://cran.rstudio.com/"),
+  source = sprintf(
+    "https://r-lib.github.io/p/pak/%s/%s/%s/%s",
+    stream = "stable",
+    .Platform$pkgType,
+    R.Version()$os,
+    R.Version()$arch
+  )
+)
+
+msg("Reinstalling 'pak' package")
+utils::install.packages("pak", repos = repo, dependencies = TRUE)

@@ -1,0 +1,36 @@
+#!/bin/env sh 
+
+# Borrowed from:
+# https://gist.github.com/iwill/88f5835bfc4e58aa1a88
+# but instead uses git-checkout
+
+
+# alias in gitconfig:
+#     cb = "!sh ~/.git-cb.sh"
+# usage:
+#     git cb ev lo # *ev*lo* - `develop` will be matched
+
+# cb = "!checkoutbranch() { local branches=`git branch | grep -i $1 | tr -d '* '`; if [[ `echo \"$branches\" | wc -l | tr -d ' '` != 1 ]]; then echo \"Matched multiple branches:\"; git branch | grep --color -i $1; exit 1; fi; git checkout $branches; }; checkoutbranch"
+
+branches=`git branch`
+
+color_options="--color"
+while [[ $# > 0 ]]; do
+    branches=`echo "$branches" | grep -i $1`
+    color_options="$color_options -ie $1"
+    shift
+done
+
+echo "Matched branches:"
+echo "$branches" | grep $color_options
+
+branches_count=`echo "$branches" | grep -v "^$" | wc -l | tr -d ' '`
+if [[ $branches_count = 1 ]]; then
+    echo
+    branch=`echo "$branches" | tr -d '* '`
+    git checkout "$branch"
+elif [[ $branches_count = 0 ]]; then
+    exit 1
+else
+    exit 2
+fi

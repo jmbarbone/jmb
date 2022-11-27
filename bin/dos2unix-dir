@@ -1,0 +1,8 @@
+#! /usr/bin/env sh 
+
+path=${1:-.}
+echo "Looking for files in: $path"
+find $path -type f -print0 | xargs -0 dos2unix
+
+echo "Looking for $path/*.Rproj"
+Rscript --vanilla "$JMB/rproj-line-ending" "$path"

@@ -1,0 +1,38 @@
+#!/usr/bin/env -S Rscript --vanilla 
+
+# pak for pak
+options(
+  repos =  c(CRAN = "https://cloud.r-project.org"),
+  pak.no_extra_messages = TRUE
+)
+
+requireNamespace("pak")
+cargs <- commandArgs(TRUE)
+
+args <- list(
+  pkg = "local::.",
+  upgrade = FALSE,
+  dependencies = NA
+)
+
+m <- match("-u", cargs, 0L)
+if (m > 0L) {
+  args$upgrade <- TRUE
+  cargs <- cargs[-m]
+}
+
+m <- match("-d", cargs, 0L)
+if (m > 0L) {
+  args$dependencies <- cargs[m + 1]
+  if (toupper(args$dependencies) %in% c("T", "F", "TRUE", "FALSE", "NA")) {
+    args$dependencies <- as.logical(toupper(args$dependencies))
+  }
+  cargs <- cargs[-c(m + 0:1)]
+}
+
+if (length(cargs)) {
+  args$pkg <- cargs
+}
+
+writeLines(paste(c("pak::", format(do.call(call, c("pak", args)))), collapse = ""))
+do.call(pak::pak, args)

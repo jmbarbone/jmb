@@ -1,0 +1,65 @@
+#!/usr/bin/env -S Rscript --vanilla 
+
+main <- function(path = ".") {
+
+    if (length(path) == 0) {
+      path <- "."
+    }
+
+    if (length(path) > 1) {
+        stop("Only one argument is allowed")
+    }
+
+    if (!fs::dir_exists(path)) {
+        stop("Directory does not exist")
+    }
+
+    rproj <- fs::dir_ls(path, glob = "*.Rproj")
+    new_line <- "LineEndingConversion: Posix"
+
+    if (length(rproj) == 1) {
+        x <- readLines(rproj)
+        m <- grep("^LineEndingConversion", x)
+
+        if (length(m) == 1) {
+            message("Replacing line ending in ", rproj)
+            x[m] <- new_line
+            writeLines(x, rproj)
+            return(invisible())
+        }
+
+        m <- grep("^AutoAppendNew[Ll]ine", x)
+        if (length(m) == 1) {
+            message("Adding line ending in ", rproj)
+            start <- seq_len(m)
+            end <- seq.int(m + 1, length(x))
+            start <- f_sort(start)
+            end <- f_sort(end)
+            x <- c(x[start], new_line, x[end])
+            writeLines(x, rproj)
+            return(invisible())
+        }
+
+        m <- grep("^LaTex", x)
+        if (length(m) == 1) {
+            message("Adding line ending in ", rproj)
+            start <- seq_len(m + 1)
+            end <- seq.int(m + 2, length(x))
+            start <- f_sort(start)
+            end <- f_sort(end)
+            x <- c(x[start], "", new_line, "", x[end])
+            writeLines(x, rproj)
+            return(invisible())
+        }
+        message("No valid placement found")
+        return(invisible())
+    }
+
+    message("No Rproj file found")
+}
+
+f_sort <- function(x) {
+    sort(unique(x))
+}
+
+main(commandArgs(TRUE))

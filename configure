@@ -1,0 +1,43 @@
+#!/usr/bin/env bash 
+
+source ~/.profile
+
+echo "i config starting"
+echo "i current wd: $PWD"
+echo "q Are you in the jmb directory? [y/n]"
+
+while true
+do
+    read -s answer;
+    case $answer in
+        y) break;;
+        n) echo "exiting"; exit 0;;
+        *) echo "Enter 'y' or 'n'";;
+    esac
+done
+
+export HERE=$PWD/bin
+
+if [[ ${JMB} == '' ]]
+then
+    echo "i exporting JMB"
+    echo "export JMB=$HERE" >> ~/.profile
+    export JMB=$HERE
+fi
+
+if [[ $(echo "$PATH" | grep "$JMB" -F) == '' ]]
+then
+    echo "i updating PATH"
+    echo "export PATH="$JMB${PATH:+:${PATH}}"" >> ~/.profile
+    export PATH="$JMB${PATH:+:${PATH}}"
+fi
+
+echo "i making bin/ executable"
+chmod +u bin/*
+
+echo "i running dos2unix"
+dos2unix bin/dos2unix-dir
+./bin/dos2unix-dir bin
+
+echo "i done"
+echo "i best to restart console"

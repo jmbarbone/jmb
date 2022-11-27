@@ -1,0 +1,36 @@
+#!/usr/bin/env -S Rscript --vanilla 
+
+# Updates mark and Rprofile from Github
+# Because of how I use Rprofile (in .Rprofile) these packages are best removed and then installed
+
+stopifnot(requireNamespace("pak", quietly = TRUE))
+
+options(
+  pak.no_extra_messages = TRUE,
+  repos = "https://cloud.r-project.org"
+)
+
+msg <- function(...) message("[msg] ", ...)
+
+# From insructions at https://github.com/r-lib/pak
+repo <- sprintf(
+  "https://r-lib.github.io/p/pak/%s/%s/%s/%s",
+  stream = "rc",
+  .Platform$pkgType,
+  R.Version()$os,
+  R.Version()$arch
+)
+
+if ("reinstall" %in% commandArgs()) {
+  msg("Reinstalling 'pak' package")
+  install.packages("pak", repos = repo)
+}
+
+
+msg("Clean up cache")
+pak::pak_cleanup(force = TRUE)
+
+pkgs <- c("mark", "markExtra", "Rprofile")
+msg("Old packages found: ", length(pkgs))
+# pak::pkg_install(paste0("any::", pkgs, "?reinstall"), dependencies = TRUE)
+pak::pak(paste0("github::jmbarbone/", pkgs), dep = TRUE)
