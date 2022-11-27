@@ -17,7 +17,7 @@ Respond to any prompts needed and have fun.
 
 ### pak
 
-Update **R** packages with `{pak}`[https://github.com/r-lib/pak]
+Update **R** packages with [`{pak}`](https://github.com/r-lib/pak)
 
 ``` sh
 pak mark
@@ -25,7 +25,7 @@ pak mark
 
 ### pak-install
 
-Installs `{pak}`[https://github.com/r-lib/pak].
+Installs [`{pak}`](https://github.com/r-lib/pak).
 Either the CRAN release or a developmental version.
 
 ``` sh
@@ -34,7 +34,7 @@ pak-install
 
 ### update-r-pkgs
 
-Tries to update _old_ R packages using `{pak}`[https://github.com/r-lib/pak].
+Tries to update _old_ R packages using [`{pak}`](https://github.com/r-lib/pak).
 
 ``` sh
 update-r-pkgs
