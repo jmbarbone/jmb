@@ -1,4 +1,4 @@
-#!/bin/env sh 
+#!/bin/env bash 
 
 # Borrowed from:
 # https://gist.github.com/iwill/88f5835bfc4e58aa1a88
