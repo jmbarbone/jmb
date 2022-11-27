@@ -1,5 +1,6 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
+
 # pak for pak
 options(
   repos =  c(CRAN = "https://cloud.r-project.org"),
@@ -8,6 +9,30 @@ options(
 
 requireNamespace("pak")
 cargs <- commandArgs(TRUE)
+
+if (any(c("-h", "--help") %in% cargs)) {
+  writeLines("
+  pak : R package installation
+  console wrapper for calling pak::pak() from R.
+
+  examples:
+    pak fuj
+    pak --d true -u dplyr tidyr
+
+  usage:
+    pak [OPTIONS] ...
+  
+  OPTIONS:
+    -h, --help              displays this and then exits
+    -d=[T,F,TRUE,FALSE,NA]  dependencies (coerced)
+    -u                      upgrade (sets to TRUE)
+    ...                     pkgs (packages)
+  
+  See more with Rscript --vanilla -e \"?pak::pak\"
+  ")
+
+  quit()
+}
 
 args <- list(
   pkg = "local::.",
