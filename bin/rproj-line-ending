@@ -10,11 +10,11 @@ main <- function(path = ".") {
         stop("Only one argument is allowed")
     }
 
-    if (!fs::dir_exists(path)) {
+    if (!dir.exists(path)) {
         stop("Directory does not exist")
     }
 
-    rproj <- fs::dir_ls(path, glob = "*.Rproj")
+    rproj <- list.files(path, pattern = "\\.Rproj$")
     new_line <- "LineEndingConversion: Posix"
 
     if (length(rproj) == 1) {
