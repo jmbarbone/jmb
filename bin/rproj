@@ -65,7 +65,7 @@ if (fs::is_dir(found)) {
   found <- fs::dir_ls(found, glob = "*.Rproj", type = "file")[1]
 }
 
-found <- fs::path_norm(found)
+found <- fs::path_abs(found)
 
 if ("--code" %in% args) {
   found <- dirname(found[1])
