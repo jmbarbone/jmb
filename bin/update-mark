@@ -30,7 +30,10 @@ if ("reinstall" %in% commandArgs()) {
 msg("Clean up cache")
 pak::pak_cleanup(force = TRUE)
 
-pkgs <- c("mark", "markExtra", "Rprofile")
+pkgs <- c("mark", "markExtra", "Rprofile", "fuj", "scribe")
 msg("Old packages found: ", length(pkgs))
 # pak::pkg_install(paste0("any::", pkgs, "?reinstall"), dependencies = TRUE)
-pak::pak(paste0("github::jmbarbone/", pkgs), dep = TRUE)
+pak::pak(paste0("github::jmbarbone/", pkgs, "?reinstall"), dep = TRUE)
+
+pkgs <- c("facts", "twenty")
+pak::pak(paste0("github::jmbarbone/", pkgs, "?reinstall"), dep = TRUE)
