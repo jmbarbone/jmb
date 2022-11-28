@@ -8,9 +8,10 @@ options(
 )
 
 requireNamespace("pak")
-cargs <- commandArgs(TRUE)
+requireNamespace("scribe")
 
-if (any(c("-h", "--help") %in% cargs)) {
+# FIXME temporary fix while I work on include a better help
+if (any(c("-h", "--help") %in% commandArgs(TRUE))) {
   writeLines("
   pak : R package installation
   console wrapper for calling pak::pak() from R.
@@ -34,30 +35,11 @@ if (any(c("-h", "--help") %in% cargs)) {
   quit()
 }
 
-args <- list(
-  pkg = "local::.",
-  upgrade = FALSE,
-  dependencies = NA
-)
-
-m <- match("-u", cargs, 0L)
-if (m > 0L) {
-  args$upgrade <- TRUE
-  cargs <- cargs[-m]
-}
-
-m <- match("-d", cargs, 0L)
-if (m > 0L) {
-  args$dependencies <- cargs[m + 1]
-  if (toupper(args$dependencies) %in% c("T", "F", "TRUE", "FALSE", "NA")) {
-    args$dependencies <- as.logical(toupper(args$dependencies))
-  }
-  cargs <- cargs[-c(m + 0:1)]
-}
-
-if (length(cargs)) {
-  args$pkg <- cargs
-}
+ca <- scribe::command_args()
+ca$add_argument("...", "pkg", default = "local::.")
+ca$add_argument("-d", "--dep", "--dependencies", default = NA)
+ca$add_argument("-u", "--upgrade", action = "flag", default = FALSE)
+args <- ca$parse()
 
 writeLines(paste(c("pak::", format(do.call(call, c("pak", args)))), collapse = ""))
 do.call(pak::pak, args)
