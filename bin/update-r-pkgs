@@ -10,7 +10,7 @@ ca$add_argument("-d", "--dep", "--dependencies", default = NA)
 args <- ca$parse()
 
 # FIXME need to implement default for dots
-args$ignore <- unique(c(args$ignore, "pak"))
+args$ignore <- unique(c(args$ignore, "pak", "scribe"))
 
 msg <- function(...) message("[msg] ", ...)
 
@@ -20,7 +20,7 @@ options(
 )
 
 msg("Checking for old packages")
-pkgs <- row.names(utils::old.packages())
+pkgs <- row.names(utils::old.packages(lib.loc = .libPaths()[[1]]))
 # pkgs <- setdiff(pkgs, "MASS") # current issue with MASS
 
 if ("pak" %in% pkgs) {
@@ -33,18 +33,20 @@ if (length(args$ignore)) {
   args$ignore <- paste0(args$ignore, "=?ignore")
 }
 
-pkgs <- paste0("any::", pkgs, "?reinstall")
+# pkgs <- paste0("any::", pkgs, "?reinstall")
 
-msg("Old packages found: ", length(pkgs))
+n <- length(pkgs)
+msg("Old packages found: ", n)
+
+if (n == 0L) {
+  msg("No old packages found. Exiting")
+  quit()
+}
+
 # pak::pkg_install(paste0("any::", pkgs, "?reinstall"), dependencies = dep)
 try(pak::pak(
   pkg = c(pkgs, args$ignore),
   upgrade = args$upgrade,
-  dependencies = args$dependencies
+  dependencies = args$dependencies,
+  ask = FALSE
 ))
-
-msg("Meta update")
-pak::meta_update()
-
-msg("Clean up cache")
-pak::pak_cleanup(force = TRUE)
