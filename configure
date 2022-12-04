@@ -39,5 +39,9 @@ echo "i running dos2unix"
 dos2unix bin/dos2unix-dir
 ./bin/dos2unix-dir bin
 
+echo "i installing pak and scribe"
+./bin/pak-install
+Rscript --vanilla -e "pak::pak('github::jmbarbone/scribe')"
+
 echo "i done"
 echo "i best to restart console"
