@@ -16,9 +16,13 @@ ca <- scribe::command_args()
 ca$add_argument("verbose", action = "flag", default = FALSE)
 ca$add_argument("code", actions = "flag", default = FALSE)
 ca$add_argument("...", "name", default = character())
-args <- ca$parse()
+params <- ca$parse()
 
-msg <- if (args$verbose) {
+if (!length(params$name)) {
+  stop("No Rproj provided")
+}
+
+msg <- if (params$verbose) {
   # 24 is currently the longest message...
   function(x, ...)  message("i ", format(x, width = 24), ...)
 } else {
@@ -36,16 +40,16 @@ if (!fs::dir_exists(homedir)) {
 msg("Using home directory: ", homedir)
 setwd(homedir)
 
-reg <- sprintf(".*%s(\\.Rproj)?$", arg$name)
+reg <- sprintf(".*%s(\\.Rproj)?$", params$name)
 msg("Searching with regex:   ", reg)
 
 found <- fs::dir_ls(regexp = reg, recurse = 3, type = c("file", "directory"))
-found <- found[mark::file_name(tolower(found)) == tolower(arg$name)]
+found <- found[mark::file_name(tolower(found)) == tolower(params$name)]
 
 n <- length(found)
 
 if (n == 0L) {
-  stop("no ", arg$name, " found")
+  stop("no ", params$name, " found")
 }
 
 dirs <- fs::is_dir(found)
@@ -69,7 +73,7 @@ if (fs::is_dir(found)) {
 
 found <- fs::path_abs(found)
 
-if ("--code" %in% args) {
+if (isTRUE(params$code)) {
   found <- dirname(found[1])
   msg("Trying to open: ", found)
   system2("code", found[1], wait = FALSE)
