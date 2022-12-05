@@ -7,15 +7,18 @@
 
 stopifnot(
   requireNamespace("fs", quietly = TRUE),
-  requireNamespace("rstudioapi", quietly = TRUE),
   requireNamespace("mark", quietly = TRUE),
   requireNamespace("fuj", quietly = TRUE),
   TRUE
 )
 
-args <- commandArgs(TRUE)
-verbose <- identical(args[2], "verbose")
-msg <- if (verbose) {
+ca <- scribe::command_args()
+ca$add_argument("verbose", action = "flag", default = FALSE)
+ca$add_argument("code", actions = "flag", default = FALSE)
+ca$add_argument("...", "name", default = character())
+args <- ca$parse()
+
+msg <- if (args$verbose) {
   # 24 is currently the longest message...
   function(x, ...)  message("i ", format(x, width = 24), ...)
 } else {
@@ -33,17 +36,16 @@ if (!fs::dir_exists(homedir)) {
 msg("Using home directory: ", homedir)
 setwd(homedir)
 
-name <- args[1]
-reg <- sprintf(".*%s(\\.Rproj)?$", args[1])
+reg <- sprintf(".*%s(\\.Rproj)?$", arg$name)
 msg("Searching with regex:   ", reg)
 
 found <- fs::dir_ls(regexp = reg, recurse = 3, type = c("file", "directory"))
-found <- found[mark::file_name(tolower(found)) == tolower(name)]
+found <- found[mark::file_name(tolower(found)) == tolower(arg$name)]
 
 n <- length(found)
 
 if (n == 0L) {
-  stop("no ", name, " found")
+  stop("no ", arg$name, " found")
 }
 
 dirs <- fs::is_dir(found)
