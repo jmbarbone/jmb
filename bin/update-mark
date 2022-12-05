@@ -1,39 +1,27 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
-# Updates mark and Rprofile from Github
-# Because of how I use Rprofile (in .Rprofile) these packages are best removed and then installed
-
-stopifnot(requireNamespace("pak", quietly = TRUE))
+requireNamespace("pak")
 
 options(
   pak.no_extra_messages = TRUE,
   repos = "https://cloud.r-project.org"
 )
 
-msg <- function(...) message("[msg] ", ...)
+pak <- Sys.which("pak")
 
-# From insructions at https://github.com/r-lib/pak
-repo <- sprintf(
-  "https://r-lib.github.io/p/pak/%s/%s/%s/%s",
-  stream = "rc",
-  .Platform$pkgType,
-  R.Version()$os,
-  R.Version()$arch
-)
-
-if ("reinstall" %in% commandArgs()) {
-  msg("Reinstalling 'pak' package")
-  install.packages("pak", repos = repo)
+if (length(pak) == 0L) {
+  stop("pak not found")
 }
 
+# main packages -- these should all play nicely with each other
+pkgs <- c("mark", "markExtra", "Rprofile", "fuj")
+pkgs <- paste0("github::jmbarbone/", pkgs, "?reinstall")
+system2(pak, c(pkgs, "-d true"))
 
-msg("Clean up cache")
-pak::pak_cleanup(force = TRUE)
-
-pkgs <- c("mark", "markExtra", "Rprofile", "fuj", "scribe")
-msg("Old packages found: ", length(pkgs))
-# pak::pkg_install(paste0("any::", pkgs, "?reinstall"), dependencies = TRUE)
-pak::pak(paste0("github::jmbarbone/", pkgs, "?reinstall"), dep = TRUE)
-
+# these packages are a little specialy right now because they require specific branches of {mark}
 pkgs <- c("facts", "twenty")
-pak::pak(paste0("github::jmbarbone/", pkgs, "?reinstall"), dep = TRUE)
+pkgs <- paste0("github::jmbarbone/", pkgs, "?reinstall")
+system2(pak, c(pkgs, "-d true"))
+
+# and {scribe} is special because bin/pak uses it
+pak::pak("github::jmbarbone/scribe?reinstall", dep = TRUE)
