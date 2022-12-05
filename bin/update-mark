@@ -2,26 +2,20 @@
 
 requireNamespace("pak")
 
+force <- "force" %in% commandArgs(TRUE)
+
 options(
   pak.no_extra_messages = TRUE,
   repos = "https://cloud.r-project.org"
 )
-
-pak <- Sys.which("pak")
-
-if (length(pak) == 0L) {
-  stop("pak not found")
+pak_pak <- function(...) {
+  pkgs <- unlist(list(...))
+  pkgs <- paste0("github::jmbarbone/", pkgs, if (force) "?reinstall")
+  pak::pak(pkgs, dependencies = TRUE)
 }
 
 # main packages -- these should all play nicely with each other
-pkgs <- c("mark", "markExtra", "Rprofile", "fuj")
-pkgs <- paste0("github::jmbarbone/", pkgs, "?reinstall")
-system2(pak, c(pkgs, "-d true"))
+pak_pak("mark", "markExtra", "Rprofile", "fuj", "scribe")
 
-# these packages are a little specialy right now because they require specific branches of {mark}
-pkgs <- c("facts", "twenty")
-pkgs <- paste0("github::jmbarbone/", pkgs, "?reinstall")
-system2(pak, c(pkgs, "-d true"))
-
-# and {scribe} is special because bin/pak uses it
-pak::pak("github::jmbarbone/scribe?reinstall", dep = TRUE)
+# these packages are a little special right now because they require specific branches of {mark}
+pak_pak("facts", "twenty")
