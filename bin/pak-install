@@ -32,3 +32,4 @@ repo <- switch(
 
 msg("Reinstalling 'pak' package")
 utils::install.packages("pak", repos = repo, dependencies = TRUE)
+pak::pak("pak", dependencies = TRUE)
