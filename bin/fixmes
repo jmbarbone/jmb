@@ -1,0 +1,18 @@
+#!/usr/bin/env -S Rscript --vanilla 
+#
+# Find `FIXMES` notes in your files using `mark::fixmes()`
+
+requireNamespace("scribe")
+requireNamespace("mark")
+
+ca <- scribe::command_args()
+ca$add_argument("--pat", "--pattern", default = NULL)
+ca$add_argument("--p", "--path", default = ".")
+ca$add_argument("-f", "--force", action = "flag")
+args <- ca$parse()
+
+mark::fixmes(
+  path = args$path,
+  pattern = args$pat,
+  force = args$force
+)
