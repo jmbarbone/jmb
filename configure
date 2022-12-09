@@ -33,7 +33,7 @@ then
 fi
 
 echo "i making bin/ executable"
-chmod +u bin/*
+chmod +x bin/*
 
 echo "i running dos2unix"
 dos2unix bin/dos2unix-dir
