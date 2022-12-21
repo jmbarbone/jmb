@@ -1,0 +1,13 @@
+#!/usr/bin/env -S Rscript --vanilla 
+#
+# Find `TODO` notes in your files using `mark::todos()`
+
+requireNamespace("scribe")
+requireNamespace("mark")
+
+ca <- scribe::command_args()
+ca$add_argument("--pat", "--pattern", default = NULL)
+ca$add_argument("--p", "--path", default = ".")
+ca$add_argument("-f", "--force", action = "flag")
+args <- ca$parse()
+do.call(mark::todos, args)
