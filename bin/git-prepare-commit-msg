@@ -1,0 +1,18 @@
+#!/usr/bin/env -S Rscript --vanilla 
+
+requireNamespace("scribe")
+
+if (!requireNamespace("Rprofile", quietly = TRUE)) {
+    stop(
+        "{Rprofile} is required.  Install with either below:\n",
+        "  Rscript --vanilla -e pak::pak('github::jmbarbone/Rprofile')\n",
+        "  Rscript --vanilla -e remotes::install_github('jmbarbone/Rprofile')"
+    )
+}
+
+ca <- scribe::command_args()
+ca$add_argument("-m", "--method",    default = "github")
+ca$add_argument("-o", "--overwrite", action = "flag")
+params <- ca$parse()
+
+do.call(Rprofile::.GitPrepareCommitMsg, params)
