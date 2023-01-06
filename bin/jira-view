@@ -1,0 +1,50 @@
+#! /usr/bin/env python
+
+import webbrowser
+import argparse
+from pygit2 import Repository
+import re
+import os
+
+
+def main(ticket: str = None, domain: str = None) -> None :
+    """Open a Jira ticket in the default browser."""
+
+    # DESCRIPTION for R related projects
+    if domain is None and os.path.exists("./DESCRIPTION") :
+        with open("./DESCRIPTION", "r") as f :
+            desc = f.read().rstrip()
+
+        try :
+            domain = re.findall("Config/jira: (.+)", desc)[0]
+        except IndexError :
+            domain = None
+            pass
+
+    if domain is None :
+        raise ValueError("No domain provided and no Config/jira: found in DESCRIPTION.")
+
+    if not domain.startswith("http") :
+        domain = f"https://{domain}"
+
+    if ticket is None :
+        branch = Repository('.').head.shorthand
+
+        try :
+            ticket = re.findall("(^[A-Z]+-?[0-9]+)-.+", branch)[0]
+        except IndexError :
+            print("Could not find a ticket in the current branch: " + branch)
+            return None
+
+    url = f"{domain}/browse/{ticket}"
+    print("Opening Jira ticket: " + url)
+    webbrowser.open(url)
+    return None
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Open a Jira ticket in the default browser.")
+    parser.add_argument("ticket", nargs="?", default=None)
+    parser.add_argument("domain", nargs="?", default=None)
+    args = parser.parse_args()
+    main(args.ticket, args.domain)
