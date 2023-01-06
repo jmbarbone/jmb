@@ -1,0 +1,11 @@
+#! /usr/bin/env bash
+
+# https://linuxize.com/post/how-to-rename-local-and-remote-git-branch/
+# Because I can never be bothered to remember this
+
+new=$1
+old=${2:-$(git rev-parse --abbrev-ref HEAD)}
+git checkout $old
+git branch -m $new
+git push origin -u $new
+git push origin --delete $old
