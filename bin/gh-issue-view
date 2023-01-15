@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+
+import re
+import subprocess
+import pygit2 as git
+import argparse
+
+
+def main(path: chr = ".", web: bool = False) -> None :
+    # Get the current branch:
+    branch = git.Repository('.').head.shorthand
+    # get the issue number from the branch name:
+    
+    try :
+        issue = re.findall("(^[0-9]+)-.+", branch)[0]
+    except IndexError :
+            raise ValueError("Could not find a ticket in the current branch: " + branch)
+    # open the issue in the default browser:
+    commands = ["gh", "issue", "view", issue]
+    if web:
+        commands.append("--web")
+    
+    subprocess.run(commands)
+    return None
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Open a GitHub issue in the default browser.")
+    parser.add_argument("path", nargs="?", default=".")
+    parser.add_argument("-w", "--web", action="store_true")
+    args = parser.parse_args()
+    main(args.path, args.web)
