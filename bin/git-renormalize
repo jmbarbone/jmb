@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+"""
+Renormalize all files in a git repository.
+
+See https://docs.github.com/en/get-started/getting-started-with-git/configuring-git-to-handle-line-endings
+for more details.
+"""
+
+import subprocess
+import os
+import argparse
+import typing
+
+
+def main(
+    path: chr = ".",
+    status: bool = True,
+    commit: typing.Union[bool, chr] = False
+ ) -> None :
+    os.chdir(path)
+    print(subprocess.run(["git", "add", "--renormalize", "."], check=True))
+
+    if status :
+        print(subprocess.run(["git", "status"], check=True))
+    
+    if commit is not False :
+        if commit is True :
+            commit = "Normalize all the line endings"
+
+        if not isinstance(commit, str) :
+            raise TypeError("Commit message must be a string")
+        
+        subprocess.run(["git", "commit", "-m", commit], check=True)
+    
+    return None
+
+
+if __name__ == "__main__" :
+    parser = argparse.ArgumentParser(description="Renormalize all files in a git repository.")
+    parser.add_argument("path", type=str, nargs="?", default=".", help="Path to the git repository.")
+    parser.add_argument("-s", "--status", action=argparse.BooleanOptionalAction, default=True, help="Show the status of the repository after renormalization.")
+    parser.add_argument("-c", "--commit", nargs="?", const=True, type=str, default=False, help="Commit the changes after renormalization.")
+    args = parser.parse_args()
+    main(args.path, args.status, args.commit)
