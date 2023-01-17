@@ -16,7 +16,8 @@ import typing
 def main(
     path: chr = ".",
     status: bool = True,
-    commit: typing.Union[bool, chr] = False
+    commit: typing.Union[bool, chr] = False,
+    push: bool = False
  ) -> None :
     os.chdir(path)
     print(subprocess.run(["git", "add", "--renormalize", "."], check=True))
@@ -33,6 +34,9 @@ def main(
         
         subprocess.run(["git", "commit", "-m", commit], check=True)
     
+    if push :
+        print(subprocess.run(["git", "push"], check=True))
+    
     return None
 
 
@@ -41,5 +45,6 @@ if __name__ == "__main__" :
     parser.add_argument("path", type=str, nargs="?", default=".", help="Path to the git repository.")
     parser.add_argument("-s", "--status", action=argparse.BooleanOptionalAction, default=True, help="Show the status of the repository after renormalization.")
     parser.add_argument("-c", "--commit", nargs="?", const=True, type=str, default=False, help="Commit the changes after renormalization.")
+    parser.add_argument("-p", "--push", action=argparse.BooleanOptionalAction, default=False, help="Push the changes after renormalization.")
     args = parser.parse_args()
-    main(args.path, args.status, args.commit)
+    main(args.path, args.status, args.commit, args.push)
