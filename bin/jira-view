@@ -2,7 +2,7 @@
 
 import webbrowser
 import argparse
-from pygit2 import Repository
+import pygit2
 import re
 import os
 
@@ -41,7 +41,7 @@ def main(ticket: str = None, domain: str = None) -> None :
         domain = f"https://{domain}"
 
     if ticket is None :
-        branch = Repository('.').head.shorthand
+        branch = pygit2.Repository('.').head.shorthand
 
         try :
             ticket = re.findall("(^[A-Z]+-?[0-9]+)-.+", branch)[0]
