@@ -10,8 +10,19 @@ import os
 def main(ticket: str = None, domain: str = None) -> None :
     """Open a Jira ticket in the default browser."""
 
-    # DESCRIPTION for R related projects
+    while domain is None and os.path.exists("./.jira") :
+        # can specify a domain in a .jira file; dcf format preferred
+        with open("./.jira", "r") as f :
+            domain = f.read().rstrip()
+        
+        try :
+            domain = re.findall("domain: (.+)", domain)[0]
+        except IndexError :
+            domain = None
+            pass
+
     if domain is None and os.path.exists("./DESCRIPTION") :
+        # useful for R related projects
         with open("./DESCRIPTION", "r") as f :
             desc = f.read().rstrip()
 
@@ -22,7 +33,9 @@ def main(ticket: str = None, domain: str = None) -> None :
             pass
 
     if domain is None :
-        raise ValueError("No domain provided and no Config/jira: found in DESCRIPTION.")
+        raise ValueError(
+            "No domain provided and not found in a 'DESCRIPTION' '.jira' file."
+        )
 
     if not domain.startswith("http") :
         domain = f"https://{domain}"
