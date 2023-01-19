@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+import os
+
+def main() :
+    match os.name :
+        case 'nt' :
+            os.system('shutdown /r /t 0')
+        case 'posix' :
+            os.system('reboot')
+        case _ :
+            print('Unsupported platform')
+
+
+if __name__ == '__main__' :
+    main()
