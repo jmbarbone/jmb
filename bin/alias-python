@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+if [ -f "$(which python3)" ]
+then
+    echo "python3 already found in path"
+    exit 1
+fi
+
+old=$(which python)
+new=$(dirname $old)/python3.exe
+
+if [ -f "$new" ]
+then
+    echo "python3 already found: $new"
+    exit 1
+else
+    echo "$old -> $new"
+    cp $old $new
+fi
+
+exit 0
