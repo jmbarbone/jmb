@@ -33,8 +33,13 @@ def main(ticket: str = None, domain: str = None) -> None :
             pass
 
     if domain is None :
+        domain = os.getenv("JIRA_DOMAIN", None)
+
+    if domain is None :
         raise ValueError(
-            "No domain provided and not found in a 'DESCRIPTION' '.jira' file."
+            "Domain not found." + 
+            " This can be passed in the call, saved in DESCRIPTION or .jira" +
+            " or stored as a default in env JIRA_DOMAIN."
         )
 
     if not domain.startswith("http") :
