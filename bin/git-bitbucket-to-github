@@ -247,5 +247,7 @@ then
 fi
 
 echo "all done!"
+echo "you can view your new repo with"
+echo "> gh repo view $github"
 do_exit 0
 exit 0 # just in case?
