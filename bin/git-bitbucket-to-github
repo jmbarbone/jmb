@@ -1,0 +1,251 @@
+#!/usr/bin/env bash
+#
+# This scipt is used to migrate a repository from Bitbucket to Github.
+# Navigate to the current directory of the repository and execute this script.
+# A temporary directory will be created and the repository will be cloned to
+# that directory. The repository will then be pushed to Github.
+#
+# some other info here:
+# https://gitprotect.io/blog/how-to-migrate-from-bitbucket-to-github/
+
+function check_jq () {
+  if [[ ! -f "$(where jq)" ]]
+  then
+    echo "jq not found"
+    echo "please install from: https://stedolan.github.io/jq/"
+    echo "or if on windows, try the below on a privileged shell"
+    echo "> choco install jq"
+    do_exit 3
+  fi
+}
+
+function check_gh() {
+  if [[ ! -f "$(where gh)" ]]
+  then
+    echo "gh not found"
+    echo "please install from: https://cli.github.com/"
+    echo "or if on windows, try the below on a privileged shell"
+    echo "> choco install gh"
+    do_exit 8
+  fi
+}
+
+function do_exit() {
+  echo "exiting ..."
+
+  if [[ -d "$bitbucket" ]]
+  then
+    cd "$bitbucket"
+  fi
+
+  if [[ -d "$tmpdir" ]]
+  then
+    rm -rf "$tmpdir"
+  fi
+
+  exit $1
+}
+
+# if -h,--help is passed anywhere
+for arg in "$@"
+do
+  case $arg in
+    -h|--help)
+      echo "USAGE"
+      echo "  cs-bitbucket-to-github <path> <org> [flags]"
+      echo ""
+      echo "POSITIONAL ARGUMENTS"
+      echo "  repo   : the path to the repository to migrate (default=.)"
+      echo "  github : the organization and repository name to migrate to"
+      echo ""
+      echo "FLAGS"
+      echo "  -h, --help   : show this help message"
+      echo "  -c, --create : create the repository on github"
+      echo ""
+      echo  "EXAMPLES"
+      echo "  # show help"
+      echo "  cs-bitbucket-to-github --help"
+      echo ""
+      echo "  # migrate from current path to a repo that exists"
+      echo "  cs-bitbucket-to-github . org/repo"
+      echo ""
+      echo "  # migrate from a set path to a repo that doesn't exist yet"
+      echo "  cs-bitbucket-to-github ~/code/my-repo my-org/new-repo --create"
+      echo ""
+      echo "EXIT CODES"
+      echo "  0 : success"
+      echo "  1 : bad flag"
+      echo "  2 : user cancelled"
+      echo "  3 : jq not found"
+      echo "  4 : could not get user/org"
+      echo "  5 : local bitbucket repo path not found"
+      echo "  6 : failed to push to github"
+      echo "  7 : github repo does not exist"
+      echo "  8 : gh not found"
+      echo "  9 : could not get remote name or url from bitbucket"
+      exit 1
+      ;;
+  esac
+done
+
+# default settings
+tmpdir=$(mktemp -d)
+create=0 
+# get positional arguments
+bitbucket=$1
+github=$2
+
+# because I always forget:
+#   https://pretzelhands.com/posts/command-line-flags/'
+# nb: $@ is the array of arguments -- the ${@:3} offsets to start at the 3rd
+#     argument thereby skipping the two positional arguments
+#     We already checked for "help" so we can skip that, too
+for arg in "${@:3}"
+do
+  case $arg in
+    -c=*|--create=*)
+      create=1
+      shift # Remove --cache= from processing
+      ;;
+    *)
+      echo "Flag not understood: $arg"
+      do_exit 1
+      ;;
+  esac
+done
+
+if [[ ! -d "$bitbucket" ]]
+then
+  echo "local bitbucket repo path not found"
+  do_exit 5
+fi
+
+# file path resolution
+bitbucket=$(cd $bitbucket && pwd)
+
+if [[ -z "$github" ]]
+then
+  check_gh
+  check_jq
+  org=$(gh api user | jq -r '.login')
+  name=$(basename "$bitbucket")
+  github="$org/$name"
+  
+  if [[ -z "$org" || -z "$name" || -z "$github" ]]
+  then
+    echo "could not get user/org"
+    echo "please provide as second argument"
+    do_exit 4
+  fi
+fi
+
+cd "$bitbucket"
+remote_name=$(git remote)
+url=$(git remote get-url $remote_name)
+
+if [[ -z "$remote_name" || -z "$url" ]]
+then
+  echo "could not get remote name or url"
+  do_exit 9
+fi
+
+echo "Are these parameters correct? (enter number)"
+echo "  bitbucket (from) : $bitbucket"
+echo "  github (to)      : $github"
+echo "  temp directory   : $tmpdir"
+echo "  url              : $url"
+echo "  remote name      : $remote_name"
+echo "  create           : $create"
+select yn in "yes" "no"
+do
+  case $yn in
+    yes )
+      echo "continuing"
+      break
+      ;;
+    no )
+      do_exit 2
+      ;;
+  esac
+done
+
+echo "pulling latest from bitbucket"
+git fetch --all
+git pull --all
+
+echo "okay to push back to bitbucket? (enter number)"
+select yn in "yes" "no"
+do
+  case $yn in
+    yes )
+      echo "pushing"
+      git push --all
+      break
+      ;;
+    no )
+      do_exit 2
+      ;;
+  esac
+done
+
+echo "cloning $url to $tmpdir"
+# clone repository to the temp directory
+
+git clone --mirror $url "$tmpdir"
+
+echo "pushing to github"
+if [[ $create == 0 ]]
+then 
+  check_jq
+  check_gh
+  gh repo view "$github" --json id | jq -e '.id'
+  if [[ -z "$?"  || $0 != 0 ]]
+  then
+    echo "repo does not exist on github"
+    echo "would you like to create it? (enter number)"
+    select yn in "yes" "no"
+    do
+      case $yn in
+        yes )
+          echo "creating (private) repo on github"
+          create=1
+          break
+          ;;
+        no )
+          echo "please create it first or use the --create flag"
+          do_exit 7
+          ;;
+      esac
+    done
+  fi
+fi  
+
+if [[ $create == 1 ]]
+then
+  echo "creating (private) repo on github"
+  check_gh
+  gh repo create "$github" --private
+fi
+
+# go to the clone and work on that
+cd $tmpdir
+git remote rm origin # remove origin to reset it
+new=https://github.com/$github.git
+git remote add origin $new # add new origin
+git push --set-upstream origin main --repo $new
+if [[ $? != 0 ]]
+then
+  echo "ERRROR could not push to github"
+  do_exit 6
+fi
+
+git push --mirror
+if [[ $? != 0 ]]
+then
+  echo "ERROR could not push to github"
+  do_exit 6
+fi
+
+echo "all done!"
+do_exit 0
+exit 0 # just in case?
