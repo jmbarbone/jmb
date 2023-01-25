@@ -103,7 +103,7 @@ github=$2
 for arg in "${@:3}"
 do
   case $arg in
-    -c=*|--create=*)
+    -c|--create)
       create=1
       shift # Remove --cache= from processing
       ;;
