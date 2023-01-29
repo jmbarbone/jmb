@@ -5,13 +5,13 @@ Execute this to transfer a directory from one repository to another while
 keeping the history.
 
 ```bash
-git-move-dir username/old-repo username/new-repo important-folder/
+git-clone-dir username/old-repo username/new-repo important-folder/
 # if "username/new-repo" doesn't exist, create it
-git-move-dir username/old-repo username/new-repo important-folder/ --create
+git-clone-dir username/old-repo username/new-repo important-folder/ --create
 ```
 
 ```bash
-git-move-dir jmbarbone/Rprofile jmbarbone/foo R/
+git-clone-dir jmbarbone/Rprofile jmbarbone/foo R/
 ```
 
 Some useful links:
@@ -25,7 +25,7 @@ import tempfile
 import os
 
 
-def git_move_dir(
+def git_clone_dir(
     old_repo : chr,
     new_repo : chr,
     subfolder : chr,
@@ -33,18 +33,18 @@ def git_move_dir(
     create : bool = False
 ) -> None :
     """
-    Fork a directory from one repository to another.
+    Clone a directory from one repository to another.
 
     Parameters
     ----------
     old_repo : chr
-        The old repository to fork from; must be {username}/{repo}
+        The old repository to clone from; must be {username}/{repo}
     new_repo : chr
-        The new repository to fork to; must be {username}/{repo}
+        The new repository to clone to; must be {username}/{repo}
     subfolder : chr
-        The subfolder to fork
+        The subfolder to clone
     branch : chr, optional
-        The branch to fork, by default "main"
+        The branch to clone, by default "main"
     create : bool, optional
         Create the new repository if it doesn't exist, by default False.
         Repositories will always be created with the `--private` flag.
@@ -74,10 +74,10 @@ def git_move_dir(
     Examples
     --------
     ```python3
-    git_move_dir("username/old-repo", "username/new-repo", "important-folder/")
+    git_clone_dir("username/old-repo", "username/new-repo", "important-folder/")
 
     # if "username/new-repo" doesn't exist, create it
-    git_move_dir(
+    git_clone_dir(
         old_repo="username/old-repo",
         new_repo="username/new-repo",
         subfolder="important-folder/",
@@ -145,24 +145,24 @@ def git_move_dir(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Fork a directory from one repository to another."
+        description="Clone a directory from one repository to another."
     )
     parser.add_argument(
         "old_repo",
-        help="The old repository to fork from (must be {username}/{repo})"
+        help="The old repository to clone from (must be {username}/{repo})"
     )
     parser.add_argument(
         "new_repo",
-        help="The new repository to fork to (must be {username}/{repo})"
+        help="The new repository to clone to (must be {username}/{repo})"
     )
     parser.add_argument(
         "subfolder",
-        help="The subfolder to fork"
+        help="The subfolder to clone"
     )
     parser.add_argument(
         "branch",
         nargs="?",
-        help="The branch to fork",
+        help="The branch to clone",
         default="main"
     )
     parser.add_argument(
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    git_move_dir(
+    git_clone_dir(
         old_repo=args.old_repo,
         new_repo=args.new_repo,
         subfolder=args.subfolder,
