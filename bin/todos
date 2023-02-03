@@ -2,9 +2,6 @@
 #
 # Find `TODO` notes in your files using `mark::todos()`
 
-requireNamespace("scribe")
-requireNamespace("mark")
-
 ca <- scribe::command_args()
 ca$add_argument("-P", "--pattern", default = NULL)
 ca$add_argument("-p", "--path", default = ".")

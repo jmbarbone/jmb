@@ -1,7 +1,5 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
-requireNamespace("pak")
-
 force <- "force" %in% commandArgs(TRUE)
 
 options(

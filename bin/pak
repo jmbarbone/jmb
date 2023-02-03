@@ -7,9 +7,6 @@ options(
   pak.no_extra_messages = TRUE
 )
 
-requireNamespace("pak")
-requireNamespace("scribe")
-
 # FIXME temporary fix while I work on include a better help
 if (any(c("-h", "--help") %in% commandArgs(TRUE))) {
   writeLines("

@@ -64,7 +64,6 @@ f_sort <- function(x) {
     sort(unique(x))
 }
 
-requireNamespace("scribe")
 ca <- scribe::command_args()
 ca$add_argument("-p", "--path", default = ".")
 ca$add_argument("-v", "--verbose", action = "flag", default = FALSE)

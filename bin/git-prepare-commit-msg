@@ -1,7 +1,5 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
-requireNamespace("scribe")
-
 if (!requireNamespace("Rprofile", quietly = TRUE)) {
     stop(
         "{Rprofile} is required.  Install with either below:\n",

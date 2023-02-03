@@ -1,8 +1,5 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
-requireNamespace("pak")
-requireNamespace("scribe")
-
 ca <- scribe::command_args()
 ca$add_argument("...", "ignore", default = character())
 ca$add_argument("-u", "--upgrade", action = "flag", default = FALSE)
