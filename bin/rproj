@@ -29,6 +29,13 @@ msg <- if (params$verbose) {
   function(...) invisible()
 }
 
+if (identical(params$name, ".")) {
+  # why this? because it enforces that the file must be in the usually
+  # directory, and because I don't want to resolve symbolic links
+  params$name <- fs::dir_ls(".", glob = "*.Rproj", type = "file", recurse = 2)
+  params$name <- mark::file_name(params$name)
+}
+
 # TODO better check for missing parameters
 homedir <- Sys.getenv("GH_HOME", Sys.getenv("R_USER", Sys.getenv("HOME")))
 homedir <- fs::path_norm(homedir)
@@ -74,17 +81,17 @@ if (fs::is_dir(found)) {
 found <- fs::path_abs(found)
 
 if (isTRUE(params$code)) {
-  found <- dirname(found[1])
+  found <- dirname(found)
   msg("Trying to open: ", found)
-  system2("code", found[1], wait = FALSE)
+  system2("code", shQuote(found), wait = FALSE)
 } else {
-  msg("Trying to open: ", found[1])
+  msg("Trying to open: ", found)
   if (fuj::is_windows()) {
-    system2("sh", c("start", found[1]), wait = FALSE)
+    system2("sh", c("start", shQuote(found)), wait = FALSE)
   } else if (fuj::is_linux()) {
     # not sure if this will work
     # system2("xdg-open", found[1], env = c(QT_QPA_PLATFORM = "xcb"), wait = FALSE)
-    system2("xdg-open", found[1], wait = FALSE)
+    system2("xdg-open", found, wait = FALSE)
   }
 }
 

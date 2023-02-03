@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+
+"""
+Execute this to transfer a directory from one repository to another while
+keeping the history.
+
+```bash
+git-clone-dir username/old-repo username/new-repo important-folder/
+# if "username/new-repo" doesn't exist, create it
+git-clone-dir username/old-repo username/new-repo important-folder/ --create
+```
+
+```bash
+git-clone-dir jmbarbone/Rprofile jmbarbone/foo R/
+```
+
+Some useful links:
+- https://stackoverflow.com/questions/41811986/git-move-directory-to-another-repository-while-keeping-the-history
+- https://docs.github.com/en/get-started/using-git/splitting-a-subfolder-out-into-a-new-repository
+"""
+
+import argparse
+import subprocess
+import tempfile
+import os
+
+
+def git_clone_dir(
+    old_repo : chr,
+    new_repo : chr,
+    subfolder : chr,
+    branch : chr = "main",
+    create : bool = False
+) -> None :
+    """
+    Clone a directory from one repository to another.
+
+    Parameters
+    ----------
+    old_repo : chr
+        The old repository to clone from; must be {username}/{repo}
+    new_repo : chr
+        The new repository to clone to; must be {username}/{repo}
+    subfolder : chr
+        The subfolder to clone
+    branch : chr, optional
+        The branch to clone, by default "main"
+    create : bool, optional
+        Create the new repository if it doesn't exist, by default False.
+        Repositories will always be created with the `--private` flag.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    Exception
+        If the new remote is not found
+    ValueError
+        If the old_repo or new_repo are not in the correct format
+
+    Notes
+    -----
+    This is a wrapper for the following commands:
+
+    ```bash
+    git clone
+    git filter-repo --path
+    git remote add origin
+    git push -u origin
+    ```
+
+    Examples
+    --------
+    ```python3
+    git_clone_dir("username/old-repo", "username/new-repo", "important-folder/")
+
+    # if "username/new-repo" doesn't exist, create it
+    git_clone_dir(
+        old_repo="username/old-repo",
+        new_repo="username/new-repo",
+        subfolder="important-folder/",
+        create=True
+    )
+    ```
+    """
+
+    if not "/" in old_repo :
+        raise ValueError("old_repo must be {username}/{repo}")
+
+    if not "/" in new_repo :
+        raise ValueError("new_repo must be {username}/{repo}")
+
+    if create :
+        path = subprocess.getoutput(["where", "gh"])
+        if not os.path.exists(path) :
+            raise Exception("gh not found in PATH")
+
+        subprocess.run(
+            ["gh", "repo", "create", new_repo, "--private"],
+            check=True
+        )
+
+    print("Switching to temporary directory")
+    tmpdir = tempfile.mkdtemp()
+    os.chdir(tmpdir)
+
+    # Clone the repository that contains the subfolder.
+    print("Cloning the repository")
+    # The `--no-local` flag is needed so that git-filter-repo doesn't complain
+    # about a fresh clone.
+    subprocess.run(
+        ["git", "clone",
+        "-b", branch,
+        "--single-branch",
+        "--no-local",
+         f"https://github.com/{old_repo}"],
+        check=True
+    )
+
+    # make sure the subfolder ends with a slash
+    if not subfolder.endswith("/") :
+        subfolder += "/"
+
+    print("Changing wd to the cloned repository")
+    # Change the current working directory to your cloned repository.
+    # should be the only file in here, right?
+    os.chdir(os.listdir()[0])
+
+    print("Filtering repo")
+    subprocess.run(["git", "filter-repo", "--path", subfolder], check=True)
+
+    print("adding origin")
+    subprocess.run(
+        ["git", "remote", "add", "origin", f"https://github.com/{new_repo}.git"],
+        check=True
+    )
+
+    print("Pushing to new GitHub repository")
+    # Push your changes to the new repository on GitHub.
+    subprocess.run(["git", "push", "-u", "origin", branch], check=True)
+    return None
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Clone a directory from one repository to another."
+    )
+    parser.add_argument(
+        "old_repo",
+        help="The old repository to clone from (must be {username}/{repo})"
+    )
+    parser.add_argument(
+        "new_repo",
+        help="The new repository to clone to (must be {username}/{repo})"
+    )
+    parser.add_argument(
+        "subfolder",
+        help="The subfolder to clone"
+    )
+    parser.add_argument(
+        "branch",
+        nargs="?",
+        help="The branch to clone",
+        default="main"
+    )
+    parser.add_argument(
+        "-c",
+        "--create",
+        action="store_true",
+        help="Create the new repository if it doesn't exist"
+    )
+
+    args = parser.parse_args()
+    git_clone_dir(
+        old_repo=args.old_repo,
+        new_repo=args.new_repo,
+        subfolder=args.subfolder,
+        branch=args.branch,
+        create=args.create
+    )
