@@ -5,16 +5,9 @@
 # folders.  This also only searches for the matching $1.Rproj file -- ignores
 # whatever the folder name may be.
 
-stopifnot(
-  requireNamespace("fs", quietly = TRUE),
-  requireNamespace("mark", quietly = TRUE),
-  requireNamespace("fuj", quietly = TRUE),
-  TRUE
-)
-
 ca <- scribe::command_args()
-ca$add_argument("verbose", action = "flag", default = FALSE)
-ca$add_argument("code", actions = "flag", default = FALSE)
+ca$add_argument("-v", "--verbose", action = "flag", default = FALSE)
+ca$add_argument("-c", "--code", action = "flag", default = FALSE)
 ca$add_argument("...", "name", default = character())
 params <- ca$parse()
 
@@ -82,17 +75,15 @@ found <- fs::path_abs(found)
 
 if (isTRUE(params$code)) {
   found <- dirname(found)
-  msg("Trying to open: ", found)
-  system2("code", shQuote(found), wait = FALSE)
-} else {
-  msg("Trying to open: ", found)
-  if (fuj::is_windows()) {
-    system2("sh", c("start", shQuote(found)), wait = FALSE)
-  } else if (fuj::is_linux()) {
-    # not sure if this will work
-    # system2("xdg-open", found[1], env = c(QT_QPA_PLATFORM = "xcb"), wait = FALSE)
-    system2("xdg-open", found, wait = FALSE)
+  fun <- function(x) {
+    # code didn't seem to work that well with xopen()
+    code <- Sys.which("code")
+    cat("Running", code, found, "\n")
+    invisible(system2(code, found, stdout = TRUE))
   }
+} else {
+  fun <- function(x) xopen::xopen(x)
 }
 
-quit()
+msg("Trying to open: ", found)
+fun(found)
