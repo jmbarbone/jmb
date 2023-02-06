@@ -1,4 +1,4 @@
-#!/usr/bin/env -S Rscript --vanilla 
+#!/usr/bin/Rscript
 # Find and open an Rproj files
 # 
 # This assumes either $R_USER or $HOME/Documents have Bitbucket or Github
