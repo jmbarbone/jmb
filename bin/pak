@@ -39,7 +39,16 @@ ca <- scribe::command_args()
 ca$add_argument("...", "pkg", default = "local::.")
 ca$add_argument("-d", "--dep", "--dependencies", default = NA)
 ca$add_argument("-u", "--upgrade", action = "flag", default = FALSE)
+ca$add_argument("-i", "--install", action = "flag", default = FALSE)
 args <- ca$parse()
 
+if (args$install) {
+  params  <- list(package = args$pkg, execute = TRUE)
+  writeLines(paste(c("pak::", format(do.call(call, c("pkg_system_requirements", params)))), collapse = ""))
+  do.call(pak::pkg_system_requirements, params)
+}
+
+# remove the install flag
+args$install <- NULL
 writeLines(paste(c("pak::", format(do.call(call, c("pak", args)))), collapse = ""))
 do.call(pak::pak, args)
