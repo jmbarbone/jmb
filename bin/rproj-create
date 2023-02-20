@@ -1,0 +1,27 @@
+#!/usr/bin/env -S Rscript --vanilla
+
+# Create a new RStudio project in the current directory
+
+field <- function(x) {
+    if (is.na(x)) {
+        return(list())
+    }
+
+    yaml::read_yaml(x)
+}
+
+ca <- scribe::command_args()
+ca$add_argument("path", help = "Name of the new project")
+ca$add_argument(
+    "--fields",
+    default = list(),
+    convert = field,
+    help = "Path to a YAML file containing fields to fill in DESCRIPTION"
+)
+ca$add_argument("--rstudio", default = rstudioapi::isAvailable())
+ca$add_argument("--roxygen", default = TRUE)
+ca$add_argument("--check_name", default = TRUE)
+ca$add_argument("--open", default = rlang::is_interactive())
+
+params <- ca$parse()
+do.call(usethis::create_package, params)
