@@ -80,9 +80,9 @@ def dbfs_log_search(
         print(f"searching in subdir: {subdir}")
         files = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts/{subdir}"])
         files.sort(reverse=True)
+
         for file in files :
             if re.search(file_pattern, file) :
-                print(f"found: {file}")
                 logs.append(f"dbfs:/cluster-logs/{cluster}/init_scripts/{subdir}/{file}")
     
     logs.sort(reverse=True)
