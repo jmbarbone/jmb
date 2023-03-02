@@ -5,6 +5,7 @@ A utility function for quickly looking up log files using Databrick's dbfs cli
 """
 
 import subprocess
+import os
 import re
 import argparse
 
@@ -62,13 +63,14 @@ def dbfs_log_search(
         print("Showing first only")
     
     if cat :
+        n = os.get_terminal_size()[0]
         for log in logs :
-            print("".ljust(len(log) + 4, "_"))
+            print("".ljust(n, "_"))
             print(f"\n#> {log}:")
-            print("".ljust(len(log) + 4, "_") + "\n")
+            print("".ljust(n, "_") + "\n")
             subprocess.run(["dbfs", "cat", log], check=True)   
         
-        print("\n".ljust(80, "_"))
+        print("\n".ljust(n, "_"))
     [print(log) for log in logs]
     return logs
 
