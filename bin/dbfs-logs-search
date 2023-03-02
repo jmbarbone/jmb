@@ -4,7 +4,11 @@
 A utility function for quickly looking up log files using Databrick's dbfs cli
 """
 
+
+import typing
+import keyring
 import subprocess
+import tempfile
 import os
 import re
 import argparse
@@ -14,7 +18,9 @@ def dbfs_log_search(
     cluster_pattern: chr = ".",
     file_pattern: chr = ".",
     single: bool = False,
-    cat: bool = True
+    cat: bool = True,
+    host: typing.Optional[chr] = None,
+    token: typing.Optional[chr] = None
 ) -> None :
     """
     dbfs log search
@@ -33,11 +39,35 @@ def dbfs_log_search(
         If True will only return the first file
     cat : bool [default=True]
         If True will print out the contents of the files
+    host: Optional[chr] [default=None]
+        If set, runs the dbfs configuration with the `token` varible
+    token: Optional[chr] [default=None]
+        The token value for authenticating.  When `None`, a token will tried to
+        be retrieved using {keyring} with "dbfs" as the service and `host` as the username
     Examples
     --------
     dbfs_log_search("npe", "r_pkgs")
     dbfs_log_search("npe", "r_pkgs", single=True)
     """
+
+    if host is not None :
+        if token is None :
+            token = keyring.get_password("dbfs", host)
+            if token is None :
+                raise Exception(f"No token found with host {host}")
+
+        if not host.startswith("https:/") :
+            host = "https://" + host
+        
+        # https://stackoverflow.com/a/55081210/12126576
+        temp = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
+        with temp as f :
+            f.writelines(token)
+        
+        args = ["dbfs", "configure", "--host", host, "--token-file", temp.name]
+        subprocess.run(args, check=True)   
+        os.unlink(temp.name)
+
     clusters = run(["dbfs", "ls", "dbfs:/cluster-logs"])
     clusters = [cluster for cluster in clusters if re.search(cluster_pattern, cluster)]
     logs = []
@@ -119,10 +149,22 @@ if __name__ == "__main__" :
         action=argparse.BooleanOptionalAction,
         default=True
     )
+    parser.add_argument(
+        "--host",
+        help="Host name (optional)",
+        required=False
+    )
+    parser.add_argument(
+        "--token",
+        help="Include a token (optional)",
+        required=False
+    )
     args = parser.parse_args()
     dbfs_log_search(
         cluster_pattern=args.cluster_pattern,
         file_pattern=args.file_pattern,
         single=args.single,
-        cat=args.cat
+        cat=args.cat,
+        host=args.host,
+        token=args.token
     )
