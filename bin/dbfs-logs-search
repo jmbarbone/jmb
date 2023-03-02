@@ -58,20 +58,20 @@ def dbfs_log_search(
 
         if not host.startswith("https:/") :
             host = "https://" + host
-        
+
         # https://stackoverflow.com/a/55081210/12126576
         temp = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
         with temp as f :
             f.writelines(token)
-        
+
         args = ["dbfs", "configure", "--host", host, "--token-file", temp.name]
-        subprocess.run(args, check=True)   
+        subprocess.run(args, check=True)
         os.unlink(temp.name)
 
     clusters = run(["dbfs", "ls", "dbfs:/cluster-logs"])
     clusters = [cluster for cluster in clusters if re.search(cluster_pattern, cluster)]
     logs = []
-    
+
     for cluster in clusters :
         print(f"searching in cluster: {cluster}")
         subdirs = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts"])
@@ -84,22 +84,22 @@ def dbfs_log_search(
         for file in files :
             if re.search(file_pattern, file) :
                 logs.append(f"dbfs:/cluster-logs/{cluster}/init_scripts/{subdir}/{file}")
-    
+
     logs.sort(reverse=True)
     print(f"Found: {len(logs)} files")
 
     if single :
         logs = logs[0:1]
         print("Showing first only")
-    
+
     if cat :
         n = os.get_terminal_size()[0]
         for log in logs :
             print("".ljust(n, "_"))
             print(f"\n#> {log}:")
             print("".ljust(n, "_") + "\n")
-            subprocess.run(["dbfs", "cat", log], check=True)   
-        
+            subprocess.run(["dbfs", "cat", log], check=True)
+
         print("\n".ljust(n, "_"))
     [print(log) for log in logs]
     return logs
