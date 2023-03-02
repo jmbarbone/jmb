@@ -12,7 +12,8 @@ import argparse
 def dbfs_log_search(
     cluster_pattern: chr = ".",
     file_pattern: chr = ".",
-    single: bool = False
+    single: bool = False,
+    cat: bool = True
 ) -> None :
     """
     dbfs log search
@@ -29,7 +30,8 @@ def dbfs_log_search(
         A pttern to find via re.search() within the cluster log file names
     single : bool [default=False]
         If True will only return the first file
-
+    cat : bool [default=True]
+        If True will print out the contents of the files
     Examples
     --------
     dbfs_log_search("npe", "r_pkgs")
@@ -53,18 +55,20 @@ def dbfs_log_search(
                 logs.append(f"dbfs:/cluster-logs/{cluster}/init_scripts/{subdir}/{file}")
     
     logs.sort(reverse=True)
+    print(f"Found: {len(logs)} files")
 
     if single :
         logs = logs[0:1]
+        print("Showing first only")
     
-    print(f"Found: {len(logs)} files")
-    for log in logs :
-        print("".ljust(len(log) + 4, "_"))
-        print(f"\n#> {log}:")
-        print("".ljust(len(log) + 4, "_") + "\n")
-        subprocess.run(["dbfs", "cat", log], check=True)   
-    
-    print("\n".ljust(80, "_"))
+    if cat :
+        for log in logs :
+            print("".ljust(len(log) + 4, "_"))
+            print(f"\n#> {log}:")
+            print("".ljust(len(log) + 4, "_") + "\n")
+            subprocess.run(["dbfs", "cat", log], check=True)   
+        
+        print("\n".ljust(80, "_"))
     [print(log) for log in logs]
     return logs
 
@@ -80,6 +84,7 @@ examples:
 
     $ dbfs-logs-search npe r_pkgs
     $ dbfs-logs-search npe r_pkgs --single
+    $ dbfs-logs-search npe r_pkgs --no-cat
 """
 
 if __name__ == "__main__" :
@@ -106,9 +111,16 @@ if __name__ == "__main__" :
         action=argparse.BooleanOptionalAction,
         default=False
     )
+    parser.add_argument(
+        "-c", "--cat",
+        help="Controls pinrint for files",
+        action=argparse.BooleanOptionalAction,
+        default=True
+    )
     args = parser.parse_args()
     dbfs_log_search(
         cluster_pattern=args.cluster_pattern,
         file_pattern=args.file_pattern,
-        single=args.single
+        single=args.single,
+        cat=args.cat
     )
