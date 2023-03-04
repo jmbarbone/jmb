@@ -3,8 +3,11 @@
 # Find `FIXMES` notes in your files using `mark::fixmes()`
 
 ca <- scribe::command_args()
+ca$add_description("cli wrapper for mark::fixmes()")
+ca$add_description("See Rscript -e \"?mark::fixmes\"")
 ca$add_argument("-P", "--pattern", default = NULL)
 ca$add_argument("-p", "--path", default = ".")
 ca$add_argument("-f", "--force", action = "flag")
 args <- ca$parse()
 do.call(mark::fixmes, args)
+q

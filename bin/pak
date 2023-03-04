@@ -7,38 +7,31 @@ options(
   pak.no_extra_messages = TRUE
 )
 
-# FIXME temporary fix while I work on include a better help
-if (any(c("-h", "--help") %in% commandArgs(TRUE))) {
-  writeLines("
-  pak : R package installation
-  console wrapper for calling pak::pak() from R.
-
-  examples:
-    pak fuj
-    pak --d true -u dplyr tidyr
-
-  usage:
-    pak [OPTIONS] ...
-  
-  OPTIONS:
-    -h, --help              displays this and then exits
-    -d=[T,F,TRUE,FALSE,NA]  dependencies (coerced)
-    -u                      upgrade (sets to TRUE)
-    ...                     pkgs (packages)
-  
-  See more with Rscript --vanilla -e \"?pak::pak\"
-  ")
-
-  op <- options(show.error.messages = FALSE)
-  on.exit(options(op))
-  writeLines("exiting")
-  stop()
-}
-
 ca <- scribe::command_args()
-ca$add_argument("...", "pkg", default = "local::.")
-ca$add_argument("-d", "--dep", "--dependencies", default = NA)
-ca$add_argument("-u", "--upgrade", action = "flag", default = FALSE)
+ca$add_description("pak : R package installation")
+ca$add_description("console wrapper for calling pak::pak() from R.")
+ca$add_example("pak fuj", "install {fuj} from CRAN")
+ca$add_example("pak --d true -u github::tidyverse/dplyr github::tidyverse/tidyr", "install dev packages")
+ca$add_argument(
+  "...",
+  "pkg",
+  default = "local::.",
+  help = "packages to install (default: local::.)"
+)
+ca$add_argument(
+  "-d",
+  "--dep",
+  "--dependencies",
+  default = NA,
+  help = "dependencies (coerced)"
+)
+ca$add_argument(
+  "-u",
+  "--upgrade",
+  action = "flag",
+  default = FALSE,
+  help = "upgrade (sets to TRUE)"
+)
 args <- ca$parse()
 
 writeLines(paste(c("pak::", format(do.call(call, c("pak", args)))), collapse = ""))
