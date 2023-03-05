@@ -7,7 +7,8 @@ options(
   pak.no_extra_messages = TRUE
 )
 
-ca <- scribe::command_args()
+library(scribe)
+ca <- command_args()
 ca$add_description("pak : R package installation")
 ca$add_description("console wrapper for calling pak::pak() from R.")
 ca$add_example("pak fuj", "install {fuj} from CRAN")
@@ -16,21 +17,21 @@ ca$add_argument(
   "...",
   "pkg",
   default = "local::.",
-  help = "packages to install (default: local::.)"
+  info = "packages to install (default: local::.)"
 )
 ca$add_argument(
   "-d",
   "--dep",
   "--dependencies",
   default = NA,
-  help = "dependencies (coerced)"
+  info = "dependencies (coerced)"
 )
 ca$add_argument(
   "-u",
   "--upgrade",
   action = "flag",
   default = FALSE,
-  help = "upgrade (sets to TRUE)"
+  info = "upgrade (sets to TRUE)"
 )
 args <- ca$parse()
 
