@@ -10,6 +10,16 @@ import os
 def main(ticket: str = None, domain: str = None) -> None :
     """Open a Jira ticket in the default browser."""
 
+    while domain is None and os.path.exists("./.atlassian") :
+        with open("./.atlassian", "r") as f :
+            domain = f.read().rstrip()
+
+        try :
+            domain = re.findall("jira: (.+)", domain)[0]
+        except IndexError :
+            domain = None
+            pass
+
     while domain is None and os.path.exists("./.jira") :
         # can specify a domain in a .jira file; dcf format preferred
         with open("./.jira", "r") as f :

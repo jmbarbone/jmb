@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+
+"""
+A utility function for quickly looking up log files using Databrick's dbfs cli
+"""
+
+
+import typing
+import keyring
+import subprocess
+import tempfile
+import os
+import re
+import argparse
+
+
+def dbfs_log_search(
+    cluster_pattern: chr = ".",
+    file_pattern: chr = ".",
+    single: bool = False,
+    cat: bool = True,
+    host: typing.Optional[chr] = None,
+    token: typing.Optional[chr] = None
+) -> None :
+    """
+    dbfs log search
+
+    Description
+    -----------
+    Print out log files from cluster inits
+
+    Parameters
+    ----------
+    cluster_pattern : str [default='.']
+        A pattern to find via re.search() within the cluster directory names
+    file_pattern : str [default='.']
+        A pttern to find via re.search() within the cluster log file names
+    single : bool [default=False]
+        If True will only return the first file
+    cat : bool [default=True]
+        If True will print out the contents of the files
+    host: Optional[chr] [default=None]
+        If set, runs the dbfs configuration with the `token` varible
+    token: Optional[chr] [default=None]
+        The token value for authenticating.  When `None`, a token will tried to
+        be retrieved using {keyring} with "dbfs" as the service and `host` as the username
+    Examples
+    --------
+    dbfs_log_search("npe", "r_pkgs")
+    dbfs_log_search("npe", "r_pkgs", single=True)
+    """
+
+    if host is not None :
+        if token is None :
+            token = keyring.get_password("dbfs", host)
+            if token is None :
+                raise Exception(f"No token found with host {host}")
+
+        if not host.startswith("https:/") :
+            host = "https://" + host
+
+        # https://stackoverflow.com/a/55081210/12126576
+        temp = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
+        with temp as f :
+            f.writelines(token)
+
+        args = ["dbfs", "configure", "--host", host, "--token-file", temp.name]
+        subprocess.run(args, check=True)
+        os.unlink(temp.name)
+
+    clusters = run(["dbfs", "ls", "dbfs:/cluster-logs"])
+    clusters = [cluster for cluster in clusters if re.search(cluster_pattern, cluster)]
+    logs = []
+
+    for cluster in clusters :
+        print(f"searching in cluster: {cluster}")
+        subdirs = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts"])
+        subdirs.sort(reverse=True)
+        subdir = subdirs[0]
+        print(f"searching in subdir: {subdir}")
+        files = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts/{subdir}"])
+        files.sort(reverse=True)
+
+        for file in files :
+            if re.search(file_pattern, file) :
+                logs.append(f"dbfs:/cluster-logs/{cluster}/init_scripts/{subdir}/{file}")
+
+    logs.sort(reverse=True)
+    print(f"Found: {len(logs)} files")
+
+    if single :
+        logs = logs[0:1]
+        print("Showing first only")
+
+    if cat :
+        n = os.get_terminal_size()[0]
+        for log in logs :
+            print("".ljust(n, "_"))
+            print(f"\n#> {log}:")
+            print("".ljust(n, "_") + "\n")
+            subprocess.run(["dbfs", "cat", log], check=True)
+
+        print("\n".ljust(n, "_"))
+    [print(log) for log in logs]
+    return logs
+
+
+def run(commands) :
+    res = subprocess.run(commands, check=True, stdout=subprocess.PIPE)
+    out = res.stdout.decode("utf-8").rsplit()
+    return out
+
+
+EXAMPLE_TEXT = """
+examples:
+
+    $ dbfs-logs-search npe r_pkgs
+    $ dbfs-logs-search npe r_pkgs --single
+    $ dbfs-logs-search npe r_pkgs --no-cat
+"""
+
+if __name__ == "__main__" :
+    parser = argparse.ArgumentParser(
+        description="Tries to print out the most recent log",
+        epilog=EXAMPLE_TEXT,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "cluster_pattern",
+        help="A pattern to match for the log directory",
+        nargs="?",
+        default="."
+    )
+    parser.add_argument(
+        "file_pattern",
+        help="A pattern to match for the log file",
+        nargs="?",
+        default="."
+    )
+    parser.add_argument(
+        "-s", "--single",
+        help="Return a single log file only",
+        action=argparse.BooleanOptionalAction,
+        default=False
+    )
+    parser.add_argument(
+        "-c", "--cat",
+        help="Controls printing for files",
+        action=argparse.BooleanOptionalAction,
+        default=True
+    )
+    parser.add_argument(
+        "--host",
+        help="Host name (optional)",
+        required=False
+    )
+    parser.add_argument(
+        "--token",
+        help="Include a token (optional)",
+        required=False
+    )
+    args = parser.parse_args()
+    dbfs_log_search(
+        cluster_pattern=args.cluster_pattern,
+        file_pattern=args.file_pattern,
+        single=args.single,
+        cat=args.cat,
+        host=args.host,
+        token=args.token
+    )
