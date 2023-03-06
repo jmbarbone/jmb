@@ -33,6 +33,13 @@ ca$add_argument(
   default = FALSE,
   info = "upgrade (sets to TRUE)"
 )
+ca$add_argument(
+  "-i", 
+  "--install",
+  action = "flag",
+  default = FALSE,
+  info = "try to install system dependencies"
+)
 args <- ca$parse()
 
 if (args$install) {
