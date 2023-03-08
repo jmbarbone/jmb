@@ -3,8 +3,10 @@
 # Find `TODO` notes in your files using `mark::todos()`
 
 ca <- scribe::command_args()
-ca$add_argument("-P", "--pattern", default = NULL)
-ca$add_argument("-p", "--path", default = ".")
-ca$add_argument("-f", "--force", action = "flag")
+ca$add_description("cli wrapper for mark::todos()")
+ca$add_description("See Rscript -e \"?mark::todos\"")
+ca$add_argument("-P", "--pattern", default = NULL, info = "see ?mark::fixmes")
+ca$add_argument("-p", "--path", default = ".", info = "see ?mark::fixmes")
+ca$add_argument("-f", "--force", action = "flag", info = "see ?mark::fixmes")
 args <- ca$parse()
 do.call(mark::todos, args)

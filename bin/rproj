@@ -5,10 +5,37 @@
 # folders.  This also only searches for the matching $1.Rproj file -- ignores
 # whatever the folder name may be.
 
-ca <- scribe::command_args()
-ca$add_argument("-v", "--verbose", action = "flag", default = FALSE)
-ca$add_argument("-c", "--code", action = "flag", default = FALSE)
-ca$add_argument("...", "name", default = character())
+library(scribe)
+ca <- command_args()
+ca$add_description("Find an .Rproj file and open it in its default application")
+ca$add_description(
+  "This assumes either that the project file can be found in one of these",
+  " directories: $GH_HOME, $R_USER, $HOME.  The actual name of the folder",
+  " doesn't matter."
+)
+ca$add_example("rproj mark")
+ca$add_example("rproj scribe --verbose")
+ca$add_example("rproj .")
+ca$add_argument(
+  "-v",
+  "--verbose",
+  action = "flag",
+  default = FALSE,
+  info = "When set, prints out additional messages"
+)
+ca$add_argument(
+  "-c",
+  "--code",
+  action = "flag",
+  default = FALSE,
+  info = "When set, calls the folder containing the .Rproj file with `code`"
+)
+ca$add_argument(
+  "...",
+  "name",
+  default = character(),
+  info = "The name of the the file.  Use '.' to search the current directory"
+)
 params <- ca$parse()
 
 if (!length(params$name)) {

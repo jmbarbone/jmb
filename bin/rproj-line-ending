@@ -64,7 +64,9 @@ f_sort <- function(x) {
     sort(unique(x))
 }
 
-ca <- scribe::command_args()
+library(scribe)
+ca <- command_args()
+ca$add_description("Tries to clean up line endings")
 ca$add_argument("-p", "--path", default = ".")
 ca$add_argument("-v", "--verbose", action = "flag", default = FALSE)
 args <- ca$parse()
