@@ -1,23 +1,47 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
-force <- "force" %in% commandArgs(TRUE)
-
 options(
   pak.no_extra_messages = TRUE,
   repos = "https://cloud.r-project.org"
 )
+
+library(scribe)
+ca <- command_args()
+ca$add_description(
+  "Installs R packages from github::jmbarbone"
+)
+ca$add_argument(
+  "-f", "--force",
+  action = "flag",
+  info = "Use the ?reinstall flag"
+)
+ca$add_argument(
+  "-d", "--dev",
+  action = "flag",
+  info = "Install dev packages, too?"
+)
+
+args <- ca$parse()
+
 pak_pak <- function(...) {
   pkgs <- unlist(list(...))
-  pkgs <- paste0("github::jmbarbone/", pkgs, if (force) "?reinstall")
+  cat("i Installing", toString(pkgs), "\n")
+  pkgs <- paste0("github::jmbarbone/", pkgs, if (args$force) "?reinstall")
   pak::pak(pkgs, dependencies = TRUE)
 }
 
 if (!fuj::is_windows()) {
-  try(pak::pkg_system_requirements(pkg, execute = TRUE))
+  try(pak::pkg_system_requirements(pkgs, execute = TRUE))
 }
 
 # main packages -- these should all play nicely with each other
 pak_pak("mark", "markExtra", "Rprofile", "fuj", "scribe")
 
 # these packages are a little special right now because they require specific branches of {mark}
-pak_pak("facts", "twenty")
+
+if (args$dev) {
+  cat("i Installing facts, twenty\n")
+  pak_pak("facts", "twenty")
+}
+
+cat("i Done\n")
