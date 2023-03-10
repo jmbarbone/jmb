@@ -41,9 +41,31 @@ if (n == 0L) {
 }
 
 # pak::pkg_install(paste0("any::", pkgs, "?reinstall"), dependencies = dep)
-try(pak::pak(
+
+if (!fuj::is_windows()) {
+  if (identical(osVersion, "Ubuntu 22.10")) {
+    os <- "ubuntu"
+    os_release <- "20.04"
+  } else {
+    os <- NULL
+    os_release <- NULL
+  }
+
+  needs <- try(pak::pkg_system_requirements(
+    pkgs,
+    os = os,
+    os_release = os_release,
+    execute = TRUE
+  ))
+
+  if (inherits(needs, "try-error")) {
+    msg("Failed to run installations")
+  }
+}
+
+pak::pak(
   pkg = c(pkgs, args$ignore),
   upgrade = args$upgrade,
   dependencies = args$dependencies,
   ask = FALSE
-))
+)
