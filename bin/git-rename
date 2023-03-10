@@ -16,9 +16,11 @@ then
     echo "  git new old"
     echo ""
     echo "ARGUMENTS"
-    echo "  new    : name of the new branch"
-    echo "  old    : name of the old branch"
-    echo "  --help : prints this and returns"
+    echo "  new          : name of the new branch"
+    echo "  old          : name of the old branch"
+    echo "  --help       : prints this and returns"
+    echo "  --delete     : deletes old branch"
+    echo "  --gh-default : tries to change new branch to GitHub default"
     echo ""
     echo "EXAMPLES"
     echo "  $ git-rename main master"
@@ -29,4 +31,18 @@ old=${2:-$(git rev-parse --abbrev-ref HEAD)}
 git checkout $old
 git branch -m $new
 git push origin -u $new
-git push origin --delete $old
+
+
+if [[ $* == *--gh-default* ]]
+then   
+    gh repo edit --default-branch $new
+fi
+
+if [[ $* == *--delete* ]]
+then
+    git push origin --delete $old || \
+      echo "tip: try" && \
+      echo "gh repo edit --default-branch $new"
+fi
+
+exit 0
