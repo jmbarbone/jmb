@@ -12,6 +12,10 @@ pak_pak <- function(...) {
   pak::pak(pkgs, dependencies = TRUE)
 }
 
+if (!fuj::is_windows()) {
+  try(pak::pkg_system_requirements(pkg, execute = TRUE))
+}
+
 # main packages -- these should all play nicely with each other
 pak_pak("mark", "markExtra", "Rprofile", "fuj", "scribe")
 
