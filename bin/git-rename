@@ -2,6 +2,27 @@
 
 # https://linuxize.com/post/how-to-rename-local-and-remote-git-branch/
 # Because I can never be bothered to remember this
+# 
+# git-rename main master
+
+if [[ $* == *--help* ]]
+then
+    echo "git-rename"
+    echo ""
+    echo "rename a branch in git"
+    echo ""
+    echo "USAGE"
+    echo "  git --help"
+    echo "  git new old"
+    echo ""
+    echo "ARGUMENTS"
+    echo "  new    : name of the new branch"
+    echo "  old    : name of the old branch"
+    echo "  --help : prints this and returns"
+    echo ""
+    echo "EXAMPLES"
+    echo "  $ git-rename main master"
+fi
 
 new=$1
 old=${2:-$(git rev-parse --abbrev-ref HEAD)}
