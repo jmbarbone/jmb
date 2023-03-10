@@ -74,16 +74,17 @@ def dbfs_log_search(
 
     for cluster in clusters :
         print(f"searching in cluster: {cluster}")
-        subdirs = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts"])
-        subdirs.sort(reverse=True)
-        subdir = subdirs[0]
-        print(f"searching in subdir: {subdir}")
-        files = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts/{subdir}"])
+        # subdirs = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts"])
+        subdirs = run(["dbfs", "ls", "-l", f"dbfs:/cluster-logs/{cluster}/init_scripts"])
+        sublists = [subdirs[i::4] for i in range(4)]
+        recent_subdir = sorted(zip(sublists[3], sublists[2]))[-1][1]
+        print(f"searching in subdir: {recent_subdir}")
+        files = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts/{recent_subdir}"])
         files.sort(reverse=True)
 
         for file in files :
             if re.search(file_pattern, file) :
-                logs.append(f"dbfs:/cluster-logs/{cluster}/init_scripts/{subdir}/{file}")
+                logs.append(f"dbfs:/cluster-logs/{cluster}/init_scripts/{recent_subdir}/{file}")
 
     logs.sort(reverse=True)
     print(f"Found: {len(logs)} files")
@@ -118,6 +119,7 @@ examples:
     $ dbfs-logs-search npe r_pkgs --single
     $ dbfs-logs-search npe r_pkgs --no-cat
 """
+
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser(
