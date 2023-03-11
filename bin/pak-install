@@ -6,30 +6,47 @@ options(pak.no_extra_messages = TRUE)
 
 msg <- function(...) message("[msg] ", ...)
 
-ca <- commandArgs(TRUE)
-n <- length(ca)
+library(scribe)
+ca <- command_args()
+ca$add_argument(
+  "source",
+  action = "list",
+  default = "cran",
+  options = list(choices = c("cran", "source")),
+  info = "Source to install"
+)
+ca$add_argument(
+  "--pkg-type",
+  default = .Platform$pkgType
+)
+ca$add_argument(
+  "--os",
+  default = R.Version()$os,
+  info = "operating system"
+)
+ca$add_argument(
+  "--arch",
+  default = R.Version()$arch
+)
+ca$add_argument(
+  "-d",
+  "--dependencies",
+  default = NA
+)
 
-if (n == 0) {
-  ca <- "cran"
-}
-
-if (n > 1) {
-  warning("Only the first argument is used")
-  ca <- ca[1]
-}
+args <- ca$parse()
 
 repo <- switch(
-  ca,
+  args$source,
   cran = c(CRAN = "https://cran.rstudio.com/"),
   source = sprintf(
-    "https://r-lib.github.io/p/pak/%s/%s/%s/%s",
-    stream = "stable",
-    .Platform$pkgType,
-    R.Version()$os,
-    R.Version()$arch
+    "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
+    args$pkg_type,
+    args$os,
+    args$arch
   )
 )
 
 msg("Reinstalling 'pak' package")
-utils::install.packages("pak", repos = repo, dependencies = TRUE)
-pak::pak("pak", dependencies = TRUE)
+utils::install.packages("pak", repos = repo, dependencies = args$dependencies)
+pak::pak("pak", dependencies = args$dependencies)
