@@ -27,28 +27,80 @@ ca$add_argument(
   info = "dependencies (coerced)"
 )
 ca$add_argument(
-  "-u",
   "--upgrade",
   action = "flag",
   default = FALSE,
-  info = "upgrade (sets to TRUE)"
+  info = "use most recent version of packages"
 )
 ca$add_argument(
-  "-i", 
-  "--install",
+  "-u",
+  "--update",
   action = "flag",
   default = FALSE,
-  info = "try to install system dependencies"
+  info = "install new versions of packages"
+)
+ca$add_argument(
+  "-l",
+  "--lib",
+  action = "list",
+  default = .libPaths()[1],
+  info = "library path for packages"
+)
+ca$add_argument(
+  "--sysreqs",
+  action = "flag",
+  default = FALSE,
+  info = "Tries to install system requirements"
+)
+ca$add_argument(
+  "-e",
+  "--echo",
+  action = "flag",
+  default = FALSE,
+  info = "Echo the lock file"
 )
 args <- ca$parse()
 
-if (args$install) {
-  params  <- list(package = args$pkg, execute = TRUE)
-  writeLines(paste(c("pak::", format(do.call(call, c("pkg_system_requirements", params)))), collapse = ""))
-  do.call(pak::pkg_system_requirements, params)
+
+pak_install <- function(
+  pkgs,
+  lib = NULL,
+  upgrade = FALSE,
+  dependencies = NA,
+  update = TRUE,
+  sysreqs = FALSE,
+  echo = FALSE
+) {
+  if (args$sysreqs) {
+    Sys.setenv(PKG_SYSREQS = "true")
+  } else {
+    Sys.setenv(PKG_SYSREQS = "false")
+  }
+
+  lockfile <- tempfile()
+  on.exit(unlink(lockfile), add = TRUE)
+
+  params <- list(
+    pkg = pkgs,
+    lockfile = lockfile,
+    lib = lib,
+    dependencies = dependencies,
+    upgrade = upgrade
+  )
+  writeLines(paste(c("pak::", format(do.call(call, c("lockfile_create", params)))), collapse = ""))
+  do.call(pak::lockfile_create, params)
+
+  if (echo) {
+    writeLines(readLines(lockfile))
+  }
+
+  params <- list(
+    lockfile = lockfile,
+    lib = lib,
+    update = update
+  )
+  writeLines(paste(c("pak::", format(do.call(call, c("lockfile_install", params)))), collapse = ""))
+  do.call(pak::lockfile_install, params)
 }
 
-# remove the install flag
-args$install <- NULL
-writeLines(paste(c("pak::", format(do.call(call, c("pak", args)))), collapse = ""))
-do.call(pak::pak, args)
+do.call(pak_install, args)
