@@ -40,8 +40,8 @@ dos2unix bin/dos2unix-dir
 ./bin/dos2unix-dir bin
 
 echo "i installing pak and scribe"
-./bin/pak-install
-Rscript --vanilla -e "pak::pak('github::jmbarbone/scribe')"
+Rscript --vanilla -e "if (!requireNamespace('scribe')) utils::install.packages('scribe')"
+./bin/pak-install source
 
 echo "i done"
 echo "i best to restart console"
