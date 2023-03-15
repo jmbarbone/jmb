@@ -40,13 +40,6 @@ ca$add_argument(
   info = "install new versions of packages"
 )
 ca$add_argument(
-  "-l",
-  "--lib",
-  action = "list",
-  default = .libPaths()[1],
-  info = "library path for packages"
-)
-ca$add_argument(
   "--sysreqs",
   action = "flag",
   default = FALSE,
@@ -59,18 +52,56 @@ ca$add_argument(
   default = FALSE,
   info = "Echo the lock file"
 )
-args <- ca$parse()
 
+ca$add_argument(
+  "--lib",
+  action = "list",
+  default = .libPaths()[1],
+  info = c(
+    "library location for plan and installation"
+  )
+)
+ca$add_argument(
+  "--lib-create",
+  action = "list",
+  default = NULL,
+  info = c(
+    "library location used for creating installation plan",
+    "when NULL defaults to --lib-loc"
+  )
+)
+ca$add_argument(
+  "--lib-install",
+  action = "list",
+  default = NULL,
+  info = c(
+    "library location to install pkgs",
+    "defaults to --lib-loc"
+  )
+)
+
+args <- ca$parse()
 
 pak_install <- function(
   pkgs,
-  lib = NULL,
+  lib = .libPaths()[1],
   upgrade = FALSE,
   dependencies = NA,
   update = TRUE,
   sysreqs = FALSE,
-  echo = FALSE
+  echo = FALSE,
+  lib_create = lib,
+  lib_install = lib
 ) {
+
+  if (is.null(lib_create)) {
+    lib_create <- lib
+  }
+
+  if (is.null(lib_install)) {
+    lib_install <- lib
+  }
+
   if (args$sysreqs) {
     Sys.setenv(PKG_SYSREQS = "true")
   } else {
@@ -83,7 +114,7 @@ pak_install <- function(
   params <- list(
     pkg = pkgs,
     lockfile = lockfile,
-    lib = lib,
+    lib = lib_create,
     dependencies = dependencies,
     upgrade = upgrade
   )
@@ -96,7 +127,7 @@ pak_install <- function(
 
   params <- list(
     lockfile = lockfile,
-    lib = lib,
+    lib = lib_install,
     update = update
   )
   writeLines(paste(c("pak::", format(do.call(call, c("lockfile_install", params)))), collapse = ""))
