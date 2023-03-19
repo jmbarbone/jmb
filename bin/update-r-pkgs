@@ -51,16 +51,13 @@ if (!fuj::is_windows()) {
     os_release <- NULL
   }
 
-  needs <- try(pak::pkg_system_requirements(
+  msg("you may need to install additional system depdencies")
+  msg(pak::pkg_system_requirements(
     pkgs,
     os = os,
     os_release = os_release,
-    execute = TRUE
+    sudo = TRUE
   ))
-
-  if (inherits(needs, "try-error")) {
-    msg("Failed to run installations")
-  }
 }
 
 pak::pak(
