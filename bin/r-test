@@ -1,0 +1,8 @@
+#!/usr/bin/env -S Rscript --vanilla
+
+library(scribe)
+ca <- command_args()
+ca$add_argument("...", "pkg", default = ".")
+ca$add_argument("--stop-on-failure ", action = "flag")
+args <- ca$parse()
+do.call(devtools::test, args)
