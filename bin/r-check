@@ -1,0 +1,18 @@
+#!/usr/bin/env -S Rscript --vanilla
+
+library(scribe)
+ca <- command_args()
+ca$add_argument("...", "pkg", default = ".")
+ca$add_argument("--cran", action = "flag")
+ca$add_argument("--run-dont-test", action = "flag")
+ca$add_argument(
+  "--error-on",
+  action = "list",
+  default = "never",
+  options = list(
+    choices = c("never", "error", "warning", "note")
+  )
+)
+
+args <- ca$parse()
+do.call(devtools::check, args)
