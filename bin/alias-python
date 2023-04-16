@@ -1,9 +1,21 @@
 #!/usr/bin/env bash
 
-if [ -f "$(which python3)" ]
+if [[ $* == *--force* ]]
 then
-    echo "python3 already found in path"
-    exit 1
+    force=true
+else
+    force=false
+fi
+
+found=$(which python3)
+if [ -f "$found" ]
+then
+    echo "python3 already found in path: $found"
+    if ! $force
+    then
+        echo "force with '--force'"
+        exit 1
+    fi
 fi
 
 old=$(which python)
@@ -12,10 +24,33 @@ new=$(dirname $old)/python3.exe
 if [ -f "$new" ]
 then
     echo "python3 already found: $new"
-    exit 1
-else
-    echo "$old -> $new"
-    cp $old $new
+    if ! $force 
+    then
+        echo "force with '--force'"
+        exit 1
+    fi
 fi
+
+
+if [[ "$OSTYPE" == "msys" ]]
+then
+    echo "detected windows; making a symbolic link"
+    wnew=$(cygpath "$new" --windows)
+    wold=$(cygpath "$old" --windows)
+    
+    echo "cmd //c \"mklink \"$wnew\" \"$wold\"\""
+    cmd //c "mklink \"$wnew\" \"$wold\""
+
+    if [[ "$?" == 0 ]]
+    then
+        exit 0
+    else 
+        echo "that didn't seem to work..."
+    fi
+fi
+
+echo "copying file"
+echo "cp \"$old\" \"$new\""
+cp "$old" "$new" || true
 
 exit 0
