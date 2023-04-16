@@ -51,6 +51,8 @@ for arg in "$@"
 do
   case $arg in
     -h|--help)
+      echo "git-bitbucket-to-github"
+      echo ""
       echo "USAGE"
       echo "  git-bitbucket-to-github <path> <org> [flags]"
       echo ""
@@ -73,7 +75,7 @@ do
       echo "  git-bitbucket-to-github ~/code/my-repo my-org/new-repo --create"
       echo ""
       echo "EXIT CODES"
-      echo "  0 : success"
+      echo "  0 : no error (also from '--help')"
       echo "  1 : bad flag"
       echo "  2 : user cancelled"
       echo "  3 : jq not found"
@@ -83,7 +85,7 @@ do
       echo "  7 : github repo does not exist"
       echo "  8 : gh not found"
       echo "  9 : could not get remote name or url from bitbucket"
-      exit 1
+      exit 0
       ;;
   esac
 done
