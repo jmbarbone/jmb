@@ -2,9 +2,20 @@
 
 library(scribe)
 ca <- command_args()
-ca$add_argument("...", "pkg", default = ".")
+ca$add_argument("pkg", default = ".")
+ca$add_argument("--build-args")
+ca$add_argument("--manual", action = "flag")
 ca$add_argument("--cran", action = "flag")
+ca$add_argument("--remote", action = "flag")
+ca$add_argument("--incoming", action = "flag")
+ca$add_argument("--force-suggests", action = "flag")
 ca$add_argument("--run-dont-test", action = "flag")
+ca$add_argument("--args", default = "--timings")
+# TODO include parsing "NOT_CRAN = \"true\""
+# ca$add_argument("--env-vars", default = c(NOT_CRAN = "true"))
+ca$add_argument("--quiet", action = "flag")
+ca$add_argument("--check-dir")
+ca$add_argument("--vignettes", action = "flag", default = TRUE)
 ca$add_argument(
   "--error-on",
   action = "list",
