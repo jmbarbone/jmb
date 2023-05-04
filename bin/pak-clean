@@ -1,0 +1,24 @@
+#!/usr/bin/env -S Rscript --vanilla
+
+library(scribe)
+
+ca <- command_args()
+ca$add_argument("--cache", action = "flag", default = TRUE, info = "cache_clean()")
+ca$add_argument("--meta", action = "flag", default = TRUE, info = "meta_clean()")
+ca$add_argument("--remove", action = "flag", default = FALSE, info = "remove {pak}")
+params <- ca$parse()
+
+if (params$cache) {
+  pak::cache_clean()
+}
+
+if (params$meta) {
+  pak::meta_clean(force = TRUE)
+}
+
+if (params$remove) {
+  utils::remove.packages("pak")
+}
+
+message("done")
+quit()
