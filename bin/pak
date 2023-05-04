@@ -7,6 +7,16 @@ options(
   pak.no_extra_messages = TRUE
 )
 
+if (packageVersion("scribe") < "0.1.0.9002") {
+  warning(
+    "some features may not work properly, try:\n",
+    "$ pak --install-scribe",
+    "\n...or\n",
+    "$ pak --install-scribe-dev",
+    call. = FALSE
+  )
+}
+
 library(scribe)
 ca <- command_args()
 ca$add_description("pak : R package installation")
@@ -79,8 +89,28 @@ ca$add_argument(
     "defaults to --lib-loc"
   )
 )
+ca$add_argument(
+  "--update-scribe",
+  action = "flag",
+  info = "Early exit to install CRAN version of {scribe}"
+)
+ca$add_argument(
+  "--update-scribe-dev",
+  action = "flag",
+  info = "Early exit to install development version of {scribe} from GitHub"
+)
 
 args <- ca$parse()
+
+if (args$update_scribe) {
+  pak::pak("scribe")
+  quit()
+}
+
+if (args$update_scribe_dev) {
+  pak::pak("github::jmbarbone/scribe")
+  quit()
+}
 
 pak_install <- function(
   pkgs,
@@ -91,7 +121,8 @@ pak_install <- function(
   sysreqs = FALSE,
   echo = FALSE,
   lib_create = lib,
-  lib_install = lib
+  lib_install = lib,
+  ...
 ) {
 
   if (is.null(lib_create)) {
