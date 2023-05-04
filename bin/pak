@@ -1,5 +1,4 @@
-#!/usr/bin/env -S Rscript --vanilla 
-
+#!/usr/bin/env -S Rscript --vanilla
 
 # pak for pak
 options(
