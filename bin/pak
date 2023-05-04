@@ -36,7 +36,7 @@ ca$add_argument(
   "-u",
   "--update",
   action = "flag",
-  default = FALSE,
+  default = TRUE,
   info = "install new versions of packages"
 )
 ca$add_argument(
