@@ -142,27 +142,33 @@ pak_install <- function(
   lockfile <- tempfile()
   on.exit(unlink(lockfile), add = TRUE)
 
-  params <- list(
+  print_eval(
+    pak::lockfile_create,
     pkg = pkgs,
     lockfile = lockfile,
     lib = lib_create,
     dependencies = dependencies,
     upgrade = upgrade
   )
-  writeLines(paste(c("pak::", format(do.call(call, c("lockfile_create", params)))), collapse = ""))
-  do.call(pak::lockfile_create, params)
 
   if (echo) {
     writeLines(readLines(lockfile))
   }
 
-  params <- list(
+  print_eval(
+    pak::lockfile_install,
     lockfile = lockfile,
     lib = lib_install,
     update = update
   )
-  writeLines(paste(c("pak::", format(do.call(call, c("lockfile_install", params)))), collapse = ""))
-  do.call(pak::lockfile_install, params)
+}
+
+# TODO consider saving this somewhere
+print_eval <- function(fun, ...) {
+  fun <- substitute(fun)
+  call <- as.call(do.call(alist, c(fun, list(...))))
+  writeLines(format(call))
+  eval(as.expression(call))
 }
 
 do.call(pak_install, args)
