@@ -30,12 +30,29 @@ pak_pak <- function(...) {
   pak::pak(pkgs, dependencies = TRUE)
 }
 
+pkgs <- c("mark", "markExtra", "Rprofile", "fuj", "scribe")
+
 if (!fuj::is_windows()) {
-  try(pak::pkg_system_requirements(pkgs, execute = TRUE))
+  distro <- distro::distro()
+
+  if (distro$id == "ubuntu" && distro$version %in% c("22.10", "23.04")) {
+    os <- distro$id
+    os_release <- "20.04"
+  } else {
+    os <- NULL
+    os_release <- NULL
+  }
+
+  try(pak::pkg_system_requirements(
+    pkgs,
+    os = os,
+    os_release = os_release,
+    execute = TRUE
+  ))
 }
 
 # main packages -- these should all play nicely with each other
-pak_pak("mark", "markExtra", "Rprofile", "fuj", "scribe")
+pak_pak(pkgs)
 
 # these packages are a little special right now because they require specific branches of {mark}
 

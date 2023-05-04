@@ -43,7 +43,7 @@ if (n == 0L) {
 # pak::pkg_install(paste0("any::", pkgs, "?reinstall"), dependencies = dep)
 
 if (!fuj::is_windows()) {
-  if (identical(osVersion, "Ubuntu 22.10")) {
+  if (osVersion %in% c("Ubuntu 22.10", "Ubuntu 23.04")) {
     os <- "ubuntu"
     os_release <- "20.04"
   } else {
