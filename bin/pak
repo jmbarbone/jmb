@@ -166,7 +166,7 @@ pak_install <- function(
 print_eval <- function(fun, ...) {
   fun <- substitute(fun)
   call <- as.call(do.call(alist, c(fun, list(...))))
-  writeLines(format(call))
+  writeLines(format(call, width = min(getOption("width") - 2, 80)))
   eval(as.expression(call))
 }
 
