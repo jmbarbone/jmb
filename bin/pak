@@ -9,9 +9,9 @@ options(
 if (packageVersion("scribe") < "0.1.0.9002") {
   warning(
     "some features may not work properly, try:\n",
-    "$ pak --install-scribe",
+    "$ pak --update-scribe",
     "\n...or\n",
-    "$ pak --install-scribe-dev",
+    "$ pak --update-scribe-dev",
     call. = FALSE
   )
 }
