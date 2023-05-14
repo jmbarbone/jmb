@@ -7,5 +7,5 @@ ca$add_argument("--filter", default = NULL)
 ca$add_argument("--stop-on-failure", action = "flag", default = TRUE)
 ca$add_argument("--export-all", default = interactive())
 args <- ca$parse()
-print(args)
+
 do.call(devtools::test, args)
