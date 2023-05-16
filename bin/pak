@@ -9,9 +9,9 @@ options(
 if (packageVersion("scribe") < "0.1.0.9002") {
   warning(
     "some features may not work properly, try:\n",
-    "$ pak --install-scribe",
+    "$ pak --update-scribe",
     "\n...or\n",
-    "$ pak --install-scribe-dev",
+    "$ pak --update-scribe-dev",
     call. = FALSE
   )
 }
@@ -166,7 +166,7 @@ pak_install <- function(
 print_eval <- function(fun, ...) {
   fun <- substitute(fun)
   call <- as.call(do.call(alist, c(fun, list(...))))
-  writeLines(format(call))
+  writeLines(format(call, width = min(getOption("width") - 2, 80)))
   eval(as.expression(call))
 }
 
