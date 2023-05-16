@@ -1,10 +1,6 @@
 #!/usr/bin/env -S Rscript --vanilla
 
 # pak for pak
-options(
-  repos =  c(CRAN = "https://cloud.r-project.org"),
-  pak.no_extra_messages = TRUE
-)
 
 if (packageVersion("scribe") < "0.1.0.9002") {
   warning(
@@ -19,7 +15,7 @@ if (packageVersion("scribe") < "0.1.0.9002") {
 library(scribe)
 ca <- command_args()
 ca$add_description("pak : R package installation")
-ca$add_description("console wrapper for calling pak::pak() from R.")
+ca$add_description("console wrapper for calling pak::pak() from R, with some extra features")
 ca$add_example("pak fuj", "install {fuj} from CRAN")
 ca$add_example("pak --d true -u github::tidyverse/dplyr github::tidyverse/tidyr", "install dev packages")
 ca$add_argument(
@@ -91,12 +87,26 @@ ca$add_argument(
 ca$add_argument(
   "--update-scribe",
   action = "flag",
+  options = list(no = FALSE),
   info = "Early exit to install CRAN version of {scribe}"
 )
 ca$add_argument(
   "--update-scribe-dev",
   action = "flag",
+  options = list(no = FALSE),
   info = "Early exit to install development version of {scribe} from GitHub"
+)
+ca$add_argument(
+  "--cran-repos",
+  default = Sys.getenv("CRAN_REPOS", "https://cloud.r-project.org"),
+  action = "list",
+  info = "Sets the repository"
+)
+ca$add_argument(
+  "--extra-messages",
+  default = TRUE,
+  action = "flag",
+  info = "sets options(pak.no_extra_messages)"
 )
 
 args <- ca$parse()
@@ -121,8 +131,15 @@ pak_install <- function(
   echo = FALSE,
   lib_create = lib,
   lib_install = lib,
+  repos = "https://cloud.r-project.org",
+  extra_messages = TRUE,
   ...
 ) {
+  op <- options(
+    repos = c(CRAN = repos),
+    pak.no_extra_messages = extra_messages
+  )
+  on.exit(options(op))
 
   if (is.null(lib_create)) {
     lib_create <- lib
