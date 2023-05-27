@@ -14,59 +14,54 @@ if (packageVersion("scribe") < "0.1.0.9002") {
 
 library(scribe)
 ca <- command_args()
+
 ca$add_description("pak : R package installation")
 ca$add_description("console wrapper for calling pak::pak() from R, with some extra features")
+
 ca$add_example("pak fuj", "install {fuj} from CRAN")
 ca$add_example("pak --d true -u github::tidyverse/dplyr github::tidyverse/tidyr", "install dev packages")
+
 ca$add_argument(
   "...",
   "pkg",
   default = "local::.",
   info = "packages to install (default: local::.)"
-)
-ca$add_argument(
+)$add_argument(
   "-d",
   "--dep",
   "--dependencies",
   default = NA,
   info = "dependencies (coerced)"
-)
-ca$add_argument(
+)$add_argument(
   "--upgrade",
   action = "flag",
   default = FALSE,
   info = "use most recent version of packages"
-)
-ca$add_argument(
+)$add_argument(
   "-u",
   "--update",
   action = "flag",
   default = TRUE,
   info = "install new versions of packages"
-)
-ca$add_argument(
+)$add_argument(
   "--sysreqs",
   action = "flag",
   default = FALSE,
   info = "Tries to install system requirements"
-)
-ca$add_argument(
+)$add_argument(
   "-e",
   "--echo",
   action = "flag",
   default = FALSE,
   info = "Echo the lock file"
-)
-
-ca$add_argument(
+)$add_argument(
   "--lib",
   action = "list",
   default = .libPaths()[1],
   info = c(
     "library location for plan and installation"
   )
-)
-ca$add_argument(
+)$add_argument(
   "--lib-create",
   action = "list",
   default = NULL,
@@ -74,8 +69,7 @@ ca$add_argument(
     "library location used for creating installation plan",
     "when NULL defaults to --lib-loc"
   )
-)
-ca$add_argument(
+)$add_argument(
   "--lib-install",
   action = "list",
   default = NULL,
@@ -83,26 +77,22 @@ ca$add_argument(
     "library location to install pkgs",
     "defaults to --lib-loc"
   )
-)
-ca$add_argument(
+)$add_argument(
   "--update-scribe",
   action = "flag",
   options = list(no = FALSE),
   info = "Early exit to install CRAN version of {scribe}"
-)
-ca$add_argument(
+)$add_argument(
   "--update-scribe-dev",
   action = "flag",
   options = list(no = FALSE),
   info = "Early exit to install development version of {scribe} from GitHub"
-)
-ca$add_argument(
+)$add_argument(
   "--cran-repos",
   default = Sys.getenv("CRAN_REPOS", "https://cloud.r-project.org"),
   action = "list",
   info = "Sets the repository"
-)
-ca$add_argument(
+)$add_argument(
   "--extra-messages",
   default = TRUE,
   action = "flag",
