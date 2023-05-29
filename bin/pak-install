@@ -4,8 +4,6 @@
 
 options(pak.no_extra_messages = TRUE)
 
-msg <- function(...) message("[msg] ", ...)
-
 library(scribe)
 ca <- command_args()
 ca$add_argument(
@@ -60,7 +58,7 @@ switch(
   }
 )
 
-msg("Installing {pak} ", text)
+message("i installing {pak} ", text)
 # https://github.com/r-lib/pak#pre-built-binaries
 utils::install.packages("pak", repos = repo, dependencies = args$dependencies)
 
@@ -68,4 +66,4 @@ if (args$reinstall) {
   pak::pak("pak", dependencies = args$dependencies)
 }
 
-msg("done")
+message("i done")
