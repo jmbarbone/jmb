@@ -13,30 +13,30 @@ ca$add_argument(
   default = "cran",
   options = list(choices = c("cran", "source")),
   info = "Source to install"
-)
-ca$add_argument(
+)$add_argument(
   "--pkg-type",
   default = .Platform$pkgType
-)
-ca$add_argument(
+)$add_argument(
   "--os",
   default = R.Version()$os,
   info = "operating system"
-)
-ca$add_argument(
+)$add_argument(
   "--arch",
   default = R.Version()$arch
-)
-ca$add_argument(
+)$add_argument(
   "-d",
   "--dependencies",
   default = NA
-)
-ca$add_argument(
+)$add_argument(
   "-r",
   "--reinstall",
   default = FALSE,
   info = "pak pak pak"
+)$add_argument(
+  "--extra-messages",
+  action = "flag",
+  default = TRUE,
+  info = "show extra pak messages"
 )
 
 args <- ca$parse()
