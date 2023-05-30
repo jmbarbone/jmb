@@ -10,8 +10,16 @@ ca$add_argument(
     "--pattern",
     default = "\\.(R|md)$)|\\.py$\\.qmd$|\\.md$",
     info = "R, Rmd, py, qmd, and md extensions"
+)$add_argument(
+    "-p",
+    "--path",
+    default = ".",
+    info = "see ?mark::fixmes"
+)$add_argument(
+    "-f",
+    "--force",
+    action = "flag",
+    info = "see ?mark::fixmes"
 )
-ca$add_argument("-p", "--path", default = ".", info = "see ?mark::fixmes")
-ca$add_argument("-f", "--force", action = "flag", info = "see ?mark::fixmes")
 args <- ca$parse()
 do.call(mark::todos, args)
