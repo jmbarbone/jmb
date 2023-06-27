@@ -1,5 +1,5 @@
 #! /usr/bin/env bash 
 
-path=${1:-.}
+path="`cd "${1:-.}"; pwd`"
 echo "Looking for files in: $path"
-find "$path" -type f -print0 | xargs -0 dos2unix --oldfile --safe --keepdate
+find $path \( -path $path/.Rproj.user -o -path $path/.git \) -prune -o -type f -print0 | xargs -0 dos2unix --oldfile --safe --keepdate
