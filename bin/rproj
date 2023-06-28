@@ -50,11 +50,18 @@ msg <- if (params$verbose) {
   function(...) invisible()
 }
 
+fs_dir_ls <- function(..., recurse = FALSE) {
+  x <- lapply(recurse, function(x) fs::dir_ls(..., recurse = x))
+  x <- lapply(x, sort)
+  fs::path(unique(unlist(x)))
+}
+
 if (identical(params$name, ".")) {
   # why this? because it enforces that the file must be in the usually
-  # directory, and because I don't want to resolve symbolic links
-  params$name <- fs::dir_ls(".", glob = "*.Rproj", type = "file", recurse = 2)
-  params$name <- mark::file_name(params$name)
+  # directory, and because I don't want to resolve symbolic links.  With the
+  # multiple recurse calls we can more correctly sort files
+  params$name <- fs_dir_ls(glob = "*.Rproj", type = "file", recurse = FALSE)
+  params$name <- mark::file_name(mark::remove_na(params$name))
 }
 
 # TODO better check for missing parameters
@@ -71,7 +78,7 @@ setwd(homedir)
 reg <- sprintf(".*%s(\\.Rproj)?$", params$name)
 msg("Searching with regex:   ", reg)
 
-found <- fs::dir_ls(regexp = reg, recurse = 3, type = c("file", "directory"))
+found <- fs_dir_ls(regexp = reg, recurse = 0:3, type = c("file", "directory"))
 found <- found[mark::file_name(tolower(found)) == tolower(params$name)]
 
 n <- length(found)
@@ -93,10 +100,10 @@ if (length(found) > 1L) {
   )
 }
 
-found <- found[1]
+found <- found[1L]
 
 if (fs::is_dir(found)) {
-  found <- fs::dir_ls(found, glob = "*.Rproj", type = "file")[1]
+  found <- fs::dir_ls(found, glob = "*.Rproj", type = "file")[1L]
 }
 
 found <- fs::path_abs(found)
