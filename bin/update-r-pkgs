@@ -9,7 +9,7 @@ args <- ca$parse()
 # FIXME need to implement default for dots
 args$ignore <- unique(c(args$ignore, "pak", "scribe"))
 
-msg <- function(...) message("[msg] ", ...)
+msg <- function(...) cat("i ", ..., "\n", sep = "")
 
 options(
   pak.no_extra_messages = TRUE,
@@ -36,7 +36,8 @@ n <- length(pkgs)
 msg("Old packages found: ", n)
 
 if (n == 0L) {
-  msg("No old packages found. Exiting")
+  msg("No old packages found")
+  msg("Exiting")
   quit()
 }
 
