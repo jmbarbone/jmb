@@ -9,16 +9,19 @@ ca$add_argument("--remove", action = "flag", default = FALSE, info = "remove {pa
 params <- ca$parse()
 
 if (params$cache) {
+  message("i cleaning cache")
   pak::cache_clean()
 }
 
 if (params$meta) {
+  message("i cleaning meta")
   pak::meta_clean(force = TRUE)
 }
 
 if (params$remove) {
+  message("i removing pak")
   utils::remove.packages("pak")
 }
 
-message("done")
+message("i done")
 quit()

@@ -33,12 +33,12 @@ ca$add_argument(
   default = NA,
   info = "dependencies (coerced)"
 )$add_argument(
+  "-u", 
   "--upgrade",
   action = "flag",
   default = FALSE,
   info = "use most recent version of packages"
 )$add_argument(
-  "-u",
   "--update",
   action = "flag",
   default = TRUE,
@@ -58,9 +58,7 @@ ca$add_argument(
   "--lib",
   action = "list",
   default = .libPaths()[1],
-  info = c(
-    "library location for plan and installation"
-  )
+  info = "library location for plan and installation"
 )$add_argument(
   "--lib-create",
   action = "list",
@@ -139,7 +137,7 @@ pak_install <- function(
     lib_install <- lib
   }
 
-  if (args$sysreqs) {
+  if (sysreqs) {
     Sys.setenv(PKG_SYSREQS = "true")
   } else {
     Sys.setenv(PKG_SYSREQS = "false")
@@ -173,7 +171,7 @@ pak_install <- function(
 print_eval <- function(fun, ...) {
   fun <- substitute(fun)
   call <- as.call(do.call(alist, c(fun, list(...))))
-  writeLines(format(call, width = min(getOption("width") - 2, 80)))
+  writeLines(format(call, width = min(getOption("width") - 4, 80)))
   eval(as.expression(call))
 }
 
