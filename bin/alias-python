@@ -11,7 +11,7 @@ found=$(which python3)
 if [ -f "$found" ]
 then
     echo "python3 already found in path: $found"
-    if ! $force
+    if [ ! $force ]
     then
         echo "force with '--force'"
         exit 1
@@ -19,21 +19,21 @@ then
 fi
 
 old=$(which python)
-new=$(dirname $old)/python3.exe
+new=$(dirname $old)/python3
 
 if [ -f "$new" ]
 then
     echo "python3 already found: $new"
-    if ! $force 
+    if [ ! $force ] 
     then
         echo "force with '--force'"
         exit 1
     fi
 fi
 
-
 if [[ "$OSTYPE" == "msys" ]]
 then
+    new=$new/.exe
     echo "detected windows; making a symbolic link"
     wnew=$(cygpath "$new" --windows)
     wold=$(cygpath "$old" --windows)
@@ -52,5 +52,5 @@ fi
 echo "copying file"
 echo "cp \"$old\" \"$new\""
 cp "$old" "$new" || true
-
+chmod +x "$new"
 exit 0
