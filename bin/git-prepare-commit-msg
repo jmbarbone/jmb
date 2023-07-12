@@ -1,11 +1,11 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
 if (!requireNamespace("Rprofile", quietly = TRUE)) {
-    stop(
-        "{Rprofile} is required.  Install with either below:\n",
-        "  Rscript --vanilla -e pak::pak('github::jmbarbone/Rprofile')\n",
-        "  Rscript --vanilla -e remotes::install_github('jmbarbone/Rprofile')"
-    )
+  stop(
+    "{Rprofile} is required.  Install with either below:\n",
+    "  Rscript --vanilla -e pak::pak('github::jmbarbone/Rprofile')\n",
+    "  Rscript --vanilla -e remotes::install_github('jmbarbone/Rprofile')"
+  )
 }
 
 ca <- scribe::command_args()
