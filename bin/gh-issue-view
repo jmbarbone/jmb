@@ -4,9 +4,11 @@ import re
 import subprocess
 import pygit2 as git
 import argparse
+import os
 
 
 def main(path: chr = ".", web: bool = False) -> None :
+    os.chdir(path)
     # Get the current branch:
     branch = git.Repository('.').head.shorthand
     # get the issue number from the branch name:
