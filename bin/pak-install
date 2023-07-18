@@ -2,6 +2,13 @@
 
 # This script is meant to be called ./configure, so I don't assume {scribe} is available
 
+if (!requireNamespace("scribe", quietly = TRUE)) {
+  message("w {scribe} not found")
+  message("i installing {scribe}")
+  utils::install.packages("scribe", repos = c(CRAN = "https://cran.rstudio.com/"))
+  stop("q please run pak-install again")
+}
+
 options(pak.no_extra_messages = TRUE)
 
 library(scribe)
@@ -58,12 +65,18 @@ switch(
   }
 )
 
-message("i installing {pak} ", text)
-# https://github.com/r-lib/pak#pre-built-binaries
-utils::install.packages("pak", repos = repo, dependencies = args$dependencies)
 
 if (args$reinstall) {
-  pak::pak("pak", dependencies = args$dependencies)
+  message("i reinstalling {pak} ", text)
+  pak::pak("pak?reinstall", dependencies = args$dependencies)
+} else {
+  message("i installing {pak} ", text)
+  # https://github.com/r-lib/pak#pre-built-binaries
+  utils::install.packages("pak", repos = repo, dependencies = args$dependencies)
 }
 
+message("i installing {pak} extra")
+pak::pak_install_extra()
+
 message("i done")
+invisible()

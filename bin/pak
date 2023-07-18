@@ -1,8 +1,19 @@
 #!/usr/bin/env -S Rscript --vanilla
 
+# check if scibe is installed
+
+if (!requireNamespace("scribe", quietly = TRUE)) {
+  warning(
+    "pak is not installed, try:\n",
+    "$ pak-install",
+    call. = FALSE
+  )
+  q()
+}
+
 # pak for pak
 
-if (packageVersion("scribe") < "0.2") {
+if (!isTRUE(try(packageVersion("scribe") <= "0.2"))) {
   warning(
     "some features may not work properly, try:\n",
     "$ pak --update-scribe",
