@@ -38,6 +38,7 @@ ca$add_argument(
   "-r",
   "--reinstall",
   default = FALSE,
+  action = "flag",
   info = "pak pak pak"
 )$add_argument(
   "--extra-messages",
