@@ -49,6 +49,16 @@ ca$add_argument(
 
 args <- ca$parse()
 
+# if on linux, check for build-essential
+if (startsWith(args$os, "linux")) {
+  if (system2("dpkg", "-s build-essential", stdout = FALSE, stderr = FALSE) != 0) {
+    stop(
+      "q need to install build-essential, please run the following command:\n",
+      "$ sudo apt install build-essential"
+    )
+  }
+}
+
 switch(
   args$source,
   cran = {
