@@ -5,112 +5,195 @@ A utility function for quickly looking up log files using Databrick's dbfs cli
 """
 
 
-import typing
 import keyring
 import subprocess
 import tempfile
 import os
 import re
 import argparse
+import pandas as pd
+import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
 
 
 def dbfs_log_search(
-    cluster_pattern: chr = ".",
-    file_pattern: chr = ".",
-    single: bool = False,
-    cat: bool = True,
-    host: typing.Optional[chr] = None,
-    token: typing.Optional[chr] = None
+        cluster_pattern: chr = ".",
+        file_pattern: chr = ".",
+        cache : bool = True,
+        n : int = 2,
+        force : bool = False,
+        cat : bool = True,
+        host: chr = None,
+        token: chr = None
 ) -> None :
-    """
-    dbfs log search
+    dbfs_configure(token=token, host=host)
+    cache_dir = os.path.join(os.path.expanduser("~"), ".dbfs-logs-search")
+    os.makedirs(cache_dir, exist_ok=True)
 
-    Description
-    -----------
-    Print out log files from cluster inits
+    config_cache = os.path.join(cache_dir, "clusters.json")
+    if (
+        cache
+        and not force
+        and os.path.exists(config_cache)
+        and (os.path.getmtime(config_cache) > (pd.Timestamp.now() - pd.Timedelta(minutes=10)).timestamp())
+    ) :
+        print(f"Found cached config: {config_cache}")
+        clusters = pd.read_json(config_cache)["clusters"]
+    else :
+        clusters = run_output("dbfs", "ls", "dbfs:/cluster-logs")
+        # save clusters
+        pd.DataFrame({"clusters" : clusters}).to_json(config_cache)
 
-    Parameters
-    ----------
-    cluster_pattern : str [default='.']
-        A pattern to find via re.search() within the cluster directory names
-    file_pattern : str [default='.']
-        A pttern to find via re.search() within the cluster log file names
-    single : bool [default=False]
-        If True will only return the first file
-    cat : bool [default=True]
-        If True will print out the contents of the files
-    host: Optional[chr] [default=None]
-        If set, runs the dbfs configuration with the `token` varible
-    token: Optional[chr] [default=None]
-        The token value for authenticating.  When `None`, a token will tried to
-        be retrieved using {keyring} with "dbfs" as the service and `host` as the username
-    Examples
-    --------
-    dbfs_log_search("npe", "r_pkgs")
-    dbfs_log_search("npe", "r_pkgs", single=True)
-    """
-
-    if host is not None :
-        if token is None :
-            token = keyring.get_password("dbfs", host)
-            if token is None :
-                raise Exception(f"No token found with host {host}")
-
-        if not host.startswith("https:/") :
-            host = "https://" + host
-
-        # https://stackoverflow.com/a/55081210/12126576
-        temp = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
-        with temp as f :
-            f.writelines(token)
-
-        args = ["dbfs", "configure", "--host", host, "--token-file", temp.name]
-        subprocess.run(args, check=True)
-        os.unlink(temp.name)
-
-    clusters = run(["dbfs", "ls", "dbfs:/cluster-logs"])
+    # print clusters on each line
+    print(f"Clusters [{len(clusters)}]:")
+    print("\n".join(clusters))
     clusters = [cluster for cluster in clusters if re.search(cluster_pattern, cluster)]
-    logs = []
+    n_clusters = len(clusters)
 
-    for cluster in clusters :
-        print(f"searching in cluster: {cluster}")
-        # subdirs = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts"])
-        subdirs = run(["dbfs", "ls", "-l", f"dbfs:/cluster-logs/{cluster}/init_scripts"])
-        sublists = [subdirs[i::4] for i in range(4)]
-        recent_subdir = sorted(zip(sublists[3], sublists[2]))[-1][1]
-        print(f"searching in subdir: {recent_subdir}")
-        files = run(["dbfs", "ls", f"dbfs:/cluster-logs/{cluster}/init_scripts/{recent_subdir}"])
-        files.sort(reverse=True)
+    if n_clusters == 0 :
+        raise Exception(f"No clusters found with pattern {cluster_pattern}")
 
-        for file in files :
-            if re.search(file_pattern, file) :
-                logs.append(f"dbfs:/cluster-logs/{cluster}/init_scripts/{recent_subdir}/{file}")
+    if n_clusters > 1 :
+        raise Exception(f"Found {n} clusters, expected 1: {clusters}")
 
-    logs.sort(reverse=True)
-    print(f"Found: {len(logs)} files")
+    cluster = clusters[0]
+    cache_path = os.path.join(cache_dir, cluster + ".pkl")
 
-    if single :
-        logs = logs[0:1]
-        print("Showing first only")
+    if ( 
+        cache 
+        and not force
+        and os.path.exists(cache_path) 
+        and (os.path.getmtime(cache_path) > (pd.Timestamp.now() - pd.Timedelta(minutes=10)).timestamp())
+     ) :
+        df = pd.read_pickle(cache_path)
+        print(f"Found cached data: {cache_path}")
+        
+    else :
+        print(f"Cache not found or too old: {cache_path}") 
+        print("Searching for logs...")
+        info = {}
+        dirs = run_output("dbfs", "ls", "--absolute", f"dbfs:/cluster-logs/{cluster}/init_scripts")
+        n_dirs = len(dirs)
+
+        # perform asynchronously
+        with ThreadPoolExecutor(max_workers=10) as executor :
+            futures = {executor.submit(get_info, dir) : dir for dir in dirs}
+            for future in as_completed(futures) :
+                dir = futures[future]
+                info[dir] = future.result()
+                print(f"Searching {len(info)}/{n_dirs} directories...", end="\r")
+
+        
+        df = pd.concat([pd.DataFrame(info[dir]) for dir in info], ignore_index=True)
+        df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d_%H%M%S")
+
+        # convert each item into a DataFrame, then bind together
+        df = pd.concat([pd.DataFrame(info[dir]) for dir in info], ignore_index=True)
+
+        if cache :
+            # store in cache
+            pd.to_pickle(df, cache_path)
+
+    # get time offset
+    offset = time.altzone
+    # convert to local time
+    df["datetime"] = df["datetime"] - pd.Timedelta(seconds=offset)
+    
+    # filter by file_pattern
+    df = df[df["script"].str.contains(file_pattern)]
+    df = df.sort_values("datetime", ascending=False)
+    df = df.reset_index(drop=True)
+    print(f"Found {len(df)} files")
+
+    if len(df) == 0 :
+        raise Exception(f"No files found with pattern {file_pattern}")
+
+    if n > len(df) :
+        print(f"Showing all {len(df)} files")
+        n = len(df)
+    else :
+        print(f"Showing first {n} files")
+        df = df[0:n]
 
     if cat :
-        n = os.get_terminal_size()[0]
-        for log in logs :
-            print("".ljust(n, "_"))
-            print(f"\n#> {log}:")
-            print("".ljust(n, "_") + "\n")
-            subprocess.run(["dbfs", "cat", log], check=True)
+        for i in range(n) :
+            # print with header ====
+            print("\n" + "".ljust(80, "="))
+            print(f"#> {df['path'][i]}")
+            print("".ljust(80, "=") + "\n")
+            run_stream("dbfs", "cat", df["path"][i])
+    else :
+        # print datetime and paths without index
+        print(df[["datetime", "path"]].to_string(index=False))
 
-        print("\n".ljust(n, "_"))
-    [print(log) for log in logs]
-    return logs
+    return None
 
 
-def run(commands) :
-    res = subprocess.run(commands, check=True, stdout=subprocess.PIPE)
+def get_info(dir) -> dict :
+    # path: 20230725_190947_00_update_system_packages.sh.stderr.log
+    # starts with date time
+    # ends with script name
+    files = run_output("dbfs", "ls", dir)
+    # extract datetime from beginning of path, first 15 characters
+    datetimes = [file[0:15] for file in files]
+    datetimes = [pd.to_datetime(datetime, format="%Y%m%d_%H%M%S") for datetime in datetimes]
+    # extract script from end of path: after 18th character, with last 14 characters removed
+    scripts = [file[19:-14] for file in files]
+    res = {
+        "directory" : [dir] * len(files),
+        "datetime" : datetimes,
+        "script" : scripts,
+        "path" : [dir + "/" + file for file in files],
+    }
+    return res
+
+
+def run_output(*args) :
+    res = subprocess.run(list(args), check=True, stdout=subprocess.PIPE)
     out = res.stdout.decode("utf-8").rsplit()
     return out
 
+
+def run_stream(*args) :
+    return subprocess.run(
+        list(args),
+        check=True,
+        stdout=sys.stderr,
+        stderr=sys.stderr,
+        text=True,
+        encoding="utf-8"
+    )
+
+
+def dbfs_configure(
+        host: chr = None,
+        token: chr = None
+) -> None :
+    if token is None :
+        return None
+    
+    token = keyring.get_password("dbfs", host)
+    if token is None :
+        raise Exception(f"No token found with host {host}")
+
+    if not host.startswith("https:/") :
+        host = "https://" + host
+
+    # https://stackoverflow.com/a/55081210/12126576
+    temp = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
+    with temp as f :
+        f.writelines(token)
+
+    args = ["dbfs", "configure", "--host", host, "--token-file", temp.name]
+    subprocess.run(args, check=True)
+    os.unlink(temp.name)
+    return None
+
+
+def cache_clear() :
+    os.unlink(os.path.join(os.path.expanduser("~"), ".dbfs-logs-search-clusters"))
+    return None
 
 EXAMPLE_TEXT = """
 examples:
@@ -140,8 +223,20 @@ if __name__ == "__main__" :
         default="."
     )
     parser.add_argument(
-        "-s", "--single",
-        help="Return a single log file only",
+        "-n",
+        help="Number of files to print",
+        type=int,
+        default=2
+    )
+    parser.add_argument(
+        "--cache",
+        help="Use cached data",
+        action=argparse.BooleanOptionalAction,
+        default=True
+    )
+    parser.add_argument(
+        "--force", "-f",
+        help="Force cache refresh",
         action=argparse.BooleanOptionalAction,
         default=False
     )
@@ -161,11 +256,25 @@ if __name__ == "__main__" :
         help="Include a token (optional)",
         required=False
     )
+    parser.add_argument(
+        "--cache-clear",
+        help="Clear the cache and exit",
+        action=argparse.BooleanOptionalAction,
+        default=False
+    )
     args = parser.parse_args()
+
+    if args.cache_clear :
+        print("Clearing cache...")
+        cache_clear()
+        exit(0)
+
     dbfs_log_search(
         cluster_pattern=args.cluster_pattern,
         file_pattern=args.file_pattern,
-        single=args.single,
+        n=args.n,
+        cache=args.cache,
+        force=args.force,
         cat=args.cat,
         host=args.host,
         token=args.token
