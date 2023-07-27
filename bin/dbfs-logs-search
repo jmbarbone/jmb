@@ -120,7 +120,7 @@ def dbfs_log_search(
         for i in range(n) :
             # print with header ====
             print("\n" + "".ljust(80, "="))
-            print(f"#> {df['path'][i]}")
+            print(f"{df['path'][i]}")
             print("".ljust(80, "=") + "\n")
             run_stream("dbfs", "cat", df["path"][i])
     else :
