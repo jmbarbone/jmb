@@ -31,19 +31,25 @@ def dbfs_log_search(
     cache_dir = os.path.join(os.path.expanduser("~"), ".dbfs-logs-search")
     os.makedirs(cache_dir, exist_ok=True)
 
-    config_cache = os.path.join(cache_dir, "clusters.json")
+    cache_path = os.path.join(cache_dir, "clusters.json")
+    cache_path_time = os.path.getmtime(cache_path)
     if (
         cache
         and not force
-        and os.path.exists(config_cache)
-        and (os.path.getmtime(config_cache) > (pd.Timestamp.now() - pd.Timedelta(minutes=10)).timestamp())
+        and os.path.exists(cache_path)
+        and (cache_path_time > (pd.Timestamp.now() - pd.Timedelta(minutes=10)).timestamp())
     ) :
-        print(f"Found cached config: {config_cache}")
-        clusters = pd.read_json(config_cache)["clusters"]
+        cache_timestamp = pd.Timestamp.fromtimestamp(cache_path_time)
+        expiration = (pd.Timestamp.now() - cache_timestamp).seconds
+
+        print(f"Found cached config: {cache_path}")
+        print(f"Last modified: {cache_timestamp}")
+        print(f"Expires in : {expiration} seconds")
+        clusters = pd.read_json(cache_path)["clusters"]
     else :
         clusters = run_output("dbfs", "ls", "dbfs:/cluster-logs")
         # save clusters
-        pd.DataFrame({"clusters" : clusters}).to_json(config_cache)
+        pd.DataFrame({"clusters" : clusters}).to_json(cache_path)
 
     # print clusters on each line
     print(f"Clusters [{len(clusters)}]:")
@@ -59,15 +65,20 @@ def dbfs_log_search(
 
     cluster = clusters[0]
     cache_path = os.path.join(cache_dir, cluster + ".pkl")
-
+    cache_path_time = os.path.getmtime(cache_path)
     if ( 
         cache 
         and not force
         and os.path.exists(cache_path) 
-        and (os.path.getmtime(cache_path) > (pd.Timestamp.now() - pd.Timedelta(minutes=10)).timestamp())
+        and (cache_path_time > (pd.Timestamp.now() - pd.Timedelta(minutes=10)).timestamp())
      ) :
+        cache_timestamp = pd.Timestamp.fromtimestamp(cache_path_time)
+        expiration = (pd.Timestamp.now() - cache_timestamp).seconds
+
+        print(f"Found cached config: {cache_path}")
+        print(f"Last modified: {cache_timestamp}")
+        print(f"Expires in : {expiration} seconds")
         df = pd.read_pickle(cache_path)
-        print(f"Found cached data: {cache_path}")
         
     else :
         print(f"Cache not found or too old: {cache_path}") 
@@ -121,6 +132,7 @@ def dbfs_log_search(
             # print with header ====
             print("\n" + "".ljust(80, "="))
             print(f"{df['path'][i]}")
+            print(f"{df['datetime'][i]}")
             print("".ljust(80, "=") + "\n")
             run_stream("dbfs", "cat", df["path"][i])
     else :
@@ -150,20 +162,26 @@ def get_info(dir) -> dict :
 
 
 def run_output(*args) :
-    res = subprocess.run(list(args), check=True, stdout=subprocess.PIPE)
+    res = subprocess.run(list(args), check=False, stdout=subprocess.PIPE)
     out = res.stdout.decode("utf-8").rsplit()
     return out
 
 
 def run_stream(*args) :
-    return subprocess.run(
-        list(args),
-        check=True,
-        stdout=sys.stderr,
-        stderr=sys.stderr,
-        text=True,
-        encoding="utf-8"
-    )
+    try :
+        subprocess.run(
+            list(args),
+            check=True,
+            stdout=sys.stderr,
+            stderr=sys.stderr,
+            text=True,
+            encoding="utf-8"
+        )
+    except subprocess.CalledProcessError :
+        print(f"Error running {' '.join(args)}")
+        pass
+    
+    return None
 
 
 def dbfs_configure(
