@@ -20,8 +20,13 @@ ca$add_argument(
     "-f",
     "--force",
     action = "flag",
+    default = getOption("mark.todos.force"),
     info = "see ?mark::todos"
+)$add_argument(
+  "--ext",
+  default = getOption("mark.todos.ext"),
+  info = "see ?mark::todos"
 )
-args <- ca$parse()
 
+args <- ca$parse()
 do.call(mark::todos, args)
