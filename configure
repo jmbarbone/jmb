@@ -2,21 +2,14 @@
 
 source ~/.profile
 
+# get directory where this file is in and set as directory
+JMB="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd $JMB
+
 echo "i config starting"
-echo "i current wd: $PWD"
-echo "q Are you in the jmb directory? [y/n]"
+echo "i jmb is here: $JMB"
 
-while true
-do
-    read -s answer;
-    case $answer in
-        y) break;;
-        n) echo "exiting"; exit 0;;
-        *) echo "Enter 'y' or 'n'";;
-    esac
-done
-
-export HERE=$PWD/bin
+export HERE=$JMB/bin
 
 if [[ ${JMB} == '' ]]
 then
