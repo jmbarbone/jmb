@@ -25,38 +25,18 @@ def dbfs_log_search(
         force : bool = False,
         cat : bool = True,
         host: chr = None,
-        token: chr = None
+        token: chr = None,
+        verbose: bool = True
 ) -> None :
     dbfs_configure(token=token, host=host)
-    cache_dir = os.path.join(os.path.expanduser("~"), ".dbfs-logs-search")
-    os.makedirs(cache_dir, exist_ok=True)
 
-    cache_path = os.path.join(cache_dir, "clusters.json")
-    try :
-        cache_path_time = os.path.getmtime(cache_path)
-    except FileNotFoundError :
-        cache_path_time = 0
-    if (
-        cache
-        and not force
-        and os.path.exists(cache_path)
-        and (cache_path_time > (pd.Timestamp.now() - pd.Timedelta(minutes=10)).timestamp())
-    ) :
-        cache_timestamp = pd.Timestamp.fromtimestamp(cache_path_time)
-        expiration = (pd.Timestamp.now() - cache_timestamp).seconds
-
-        print(f"Found cached config: {cache_path}")
-        print(f"Last modified: {cache_timestamp}")
-        print(f"Expires in : {expiration} seconds")
-        clusters = pd.read_json(cache_path)["clusters"]
-    else :
-        clusters = run_output("dbfs", "ls", "dbfs:/cluster-logs")
-        # save clusters
-        pd.DataFrame({"clusters" : clusters}).to_json(cache_path)
-
-    # print clusters on each line
-    print(f"Clusters [{len(clusters)}]:")
-    print("\n".join(clusters))
+    # retrieve cluster information
+    clusters = get_clusters(cache=cache, force=force, verbose=verbose)
+    ## print clusters on each line
+    if verbose :
+        print(f"Clusters [{len(clusters)}]:")
+        print("\n".join(clusters))
+    
     clusters = [cluster for cluster in clusters if re.search(cluster_pattern, cluster)]
     n_clusters = len(clusters)
 
@@ -67,70 +47,35 @@ def dbfs_log_search(
         raise Exception(f"Found {n} clusters, expected 1: {clusters}")
 
     cluster = clusters[0]
-    cache_path = os.path.join(cache_dir, cluster + ".pkl")
-    try :
-        cache_path_time = os.path.getmtime(cache_path)
-    except FileNotFoundError :
-        cache_path_time = 0
-    if ( 
-        cache 
-        and not force
-        and os.path.exists(cache_path) 
-        and (cache_path_time > (pd.Timestamp.now() - pd.Timedelta(minutes=10)).timestamp())
-     ) :
-        cache_timestamp = pd.Timestamp.fromtimestamp(cache_path_time)
-        expiration = (pd.Timestamp.now() - cache_timestamp).seconds
+    
+    # retrieve logs information
+    df = get_logs_info(cluster=cluster, cache=cache, force=force, verbose=verbose)
 
-        print(f"Found cached config: {cache_path}")
-        print(f"Last modified: {cache_timestamp}")
-        print(f"Expires in : {expiration} seconds")
-        df = pd.read_pickle(cache_path)
-        
-    else :
-        print(f"Cache not found or too old: {cache_path}") 
-        print("Searching for logs...")
-        info = {}
-        dirs = run_output("dbfs", "ls", "--absolute", f"dbfs:/cluster-logs/{cluster}/init_scripts")
-        n_dirs = len(dirs)
-
-        # perform asynchronously
-        with ThreadPoolExecutor(max_workers=10) as executor :
-            futures = {executor.submit(get_info, dir) : dir for dir in dirs}
-            for future in as_completed(futures) :
-                dir = futures[future]
-                info[dir] = future.result()
-                print(f"Searching {len(info)}/{n_dirs} directories...", end="\r")
-
-        
-        df = pd.concat([pd.DataFrame(info[dir]) for dir in info], ignore_index=True)
-        df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d_%H%M%S")
-
-        # convert each item into a DataFrame, then bind together
-        df = pd.concat([pd.DataFrame(info[dir]) for dir in info], ignore_index=True)
-
-        if cache :
-            # store in cache
-            pd.to_pickle(df, cache_path)
-
-    # get time offset
+    ## get time offset
     offset = time.altzone
-    # convert to local time
+    ## convert to local time
     df["datetime"] = df["datetime"] - pd.Timedelta(seconds=offset)
     
-    # filter by file_pattern
+    ## filter by file_pattern
     df = df[df["script"].str.contains(file_pattern)]
     df = df.sort_values("datetime", ascending=False)
+    ## unique by datetime, script, type
+    df = df.drop_duplicates(["datetime", "script", "type"])
     df = df.reset_index(drop=True)
-    print(f"Found {len(df)} files")
+    if verbose :
+        print(f"Found {len(df)} files")
 
+    # print outputs
     if len(df) == 0 :
         raise Exception(f"No files found with pattern {file_pattern}")
 
     if n > len(df) :
-        print(f"Showing all {len(df)} files")
+        if verbose :
+            print(f"Showing all {len(df)} files")
         n = len(df)
     else :
-        print(f"Showing first {n} files")
+        if verbose :
+            print(f"Showing first {n} files")
         df = df[0:n]
 
     if cat :
@@ -148,6 +93,126 @@ def dbfs_log_search(
     return None
 
 
+def get_clusters(
+        cache : bool = True, 
+        force : bool = False,
+        verbose : bool = True
+    ) -> list :
+    path = cache_path("clusters.json")
+    
+    try :
+        # get mtime as UTC
+        mtime = os.path.getmtime(path)
+    except FileNotFoundError :
+        mtime = 0
+
+    # get now as UTC
+    now = pd.Timestamp.utcnow()
+
+    if ( 
+        cache 
+        and not force
+        and os.path.exists(path) 
+        and (mtime > (now - pd.Timedelta(minutes=10)).timestamp())
+     ) :
+        ts = pd.Timestamp.fromtimestamp(mtime)
+        expiration = 600 - (now.timestamp() - mtime)
+        expiration = int(expiration)
+
+        if verbose :
+            print(f"Found cached  : {path}")
+            print(f"Last modified : {ts}")
+            print(f"Expires in    : {expiration} seconds")
+
+        clusters = pd.read_json(path)["clusters"]
+    else :
+        clusters = run_output("dbfs", "ls", "dbfs:/cluster-logs")
+        # save clusters
+        pd.DataFrame({"clusters" : clusters}).to_json(path)
+    
+    return clusters
+
+
+def get_logs_info(
+        cluster: chr,
+        cache : bool = True,
+        force : bool = False,
+        verbose : bool = True
+    ) -> pd.DataFrame :
+    path = cache_path(cluster + ".pkl")
+
+    try :
+        # get mtime as UTC
+        mtime = os.path.getmtime(path)
+    except FileNotFoundError :
+        mtime = 0
+
+    # get now as UTC
+    now = pd.Timestamp.utcnow()
+
+    if ( 
+        cache 
+        and not force
+        and os.path.exists(path) 
+        and (mtime > (now - pd.Timedelta(minutes=10)).timestamp())
+     ) :
+        ts = pd.Timestamp.fromtimestamp(mtime)
+        expiration = 600 - (now.timestamp() - mtime)
+        expiration = int(expiration)
+
+        if verbose :
+            print(f"Found cached  : {path}")
+            print(f"Last modified : {ts}")
+            print(f"Expires in    : {expiration} seconds")
+
+        df = pd.read_pickle(path)
+        # early exit
+        return df
+    
+    if verbose :
+        print(f"Cache not found or too old: {path}") 
+        print("Searching for logs...")
+    
+    info = {}
+    dirs = run_output("dbfs", "ls", "--absolute", f"dbfs:/cluster-logs/{cluster}/init_scripts")
+    n_dirs = len(dirs)
+
+    # perform asynchronously
+    with ThreadPoolExecutor(max_workers=10) as executor :
+        futures = {executor.submit(get_info, dir) : dir for dir in dirs}
+        for future in as_completed(futures) :
+            dir = futures[future]
+            info[dir] = future.result()
+            if verbose :
+                print(f"Searching {len(info)}/{n_dirs} directories...", end="\r")
+    if verbose :
+        print("")
+
+    df = pd.concat([pd.DataFrame(info[dir]) for dir in info], ignore_index=True)
+    df["datetime"] = pd.to_datetime(df["datetime"], format="%Y%m%d_%H%M%S")
+
+    # convert each item into a DataFrame, then bind together
+    df = pd.concat([pd.DataFrame(info[dir]) for dir in info], ignore_index=True)
+
+    if cache :
+        # store in cache
+        pd.to_pickle(df, path)
+
+    return df
+
+
+def cache_path(*args) -> chr :
+    cache_dir = os.path.join(os.path.expanduser("~"), ".dbfs-logs-search")
+    os.makedirs(cache_dir, exist_ok=True)
+    
+    # when *args is none, just return cache_dir
+    if len(args) == 0 :
+        return cache_dir
+
+    path = os.path.join(cache_dir, *args)
+    return path
+
+
 def get_info(dir) -> dict :
     # path: 20230725_190947_00_update_system_packages.sh.stderr.log
     # starts with date time
@@ -158,10 +223,13 @@ def get_info(dir) -> dict :
     datetimes = [pd.to_datetime(datetime, format="%Y%m%d_%H%M%S") for datetime in datetimes]
     # extract script from end of path: after 18th character, with last 14 characters removed
     scripts = [file[19:-14] for file in files]
+    # extract output put
+    types = [file[-10:-4] for file in files]
     res = {
         "directory" : [dir] * len(files),
         "datetime" : datetimes,
         "script" : scripts,
+        "type" : types,
         "path" : [dir + "/" + file for file in files],
     }
     return res
@@ -216,8 +284,18 @@ def dbfs_configure(
 
 
 def cache_clear() :
-    os.unlink(os.path.join(os.path.expanduser("~"), ".dbfs-logs-search-clusters"))
+    # find total size of cache
+    total_size = 0
+    for root, _, files in os.walk(cache_path()) :
+        for file in files :
+            path = os.path.join(root, file)
+            total_size += os.path.getsize(path)
+
+    print(f"Total size of cache: {total_size} bytes")
+    # delete cache directory
+    os.system(f"rm -rf {cache_path()}")
     return None
+
 
 EXAMPLE_TEXT = """
 examples:
@@ -281,8 +359,26 @@ if __name__ == "__main__" :
         required=False
     )
     parser.add_argument(
+        "--verbose", "-v",
+        help="Verbose output (ignored with immediate exits, which are not verbose)",
+        action=argparse.BooleanOptionalAction,
+        default=True
+    )
+    parser.add_argument(
         "--cache-clear",
         help="Clear the cache and exit",
+        action=argparse.BooleanOptionalAction,
+        default=False
+    )
+    parser.add_argument(
+        "--get-clusters",
+        help="Get clusters and exit",
+        action=argparse.BooleanOptionalAction,
+        default=False
+    )
+    parser.add_argument(
+        "--get-cache-path",
+        help="Get cache path and exit",
         action=argparse.BooleanOptionalAction,
         default=False
     )
@@ -293,6 +389,16 @@ if __name__ == "__main__" :
         cache_clear()
         exit(0)
 
+    if args.get_clusters :
+        clusters = get_clusters(cache=args.cache, force=args.force, verbose=False)
+        print("\n".join(clusters))
+        exit(0)
+    
+    if args.get_cache_path :
+        path = cache_path()
+        print(path)
+        exit(0)
+
     dbfs_log_search(
         cluster_pattern=args.cluster_pattern,
         file_pattern=args.file_pattern,
@@ -301,5 +407,6 @@ if __name__ == "__main__" :
         force=args.force,
         cat=args.cat,
         host=args.host,
-        token=args.token
+        token=args.token,
+        verbose=args.verbose
     )
