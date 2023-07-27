@@ -20,8 +20,9 @@ import time
 def dbfs_log_search(
         cluster_pattern: chr = ".",
         file_pattern: chr = ".",
+        type : list = None,
         cache : bool = True,
-        n : int = 2,
+        n : int = 1,
         force : bool = False,
         cat : bool = True,
         host: chr = None,
@@ -56,8 +57,18 @@ def dbfs_log_search(
     ## convert to local time
     df["datetime"] = df["datetime"] - pd.Timedelta(seconds=offset)
     
-    ## filter by file_pattern
+    ## filter by file regex
     df = df[df["script"].str.contains(file_pattern)]
+
+    if type is None :
+        type = ["stdout", "stderr"]
+    elif isinstance(type, str) :
+        type = [type]
+    
+    n = n * len(type)
+    assert [t in ["stdout", "stderr"] for t in type]
+    df = df[df["type"].isin(type)]
+
     df = df.sort_values("datetime", ascending=False)
     ## unique by datetime, script, type
     df = df.drop_duplicates(["datetime", "script", "type"])
@@ -299,10 +310,12 @@ def cache_clear() :
 
 EXAMPLE_TEXT = """
 examples:
-
     $ dbfs-logs-search npe r_pkgs
-    $ dbfs-logs-search npe r_pkgs --single
     $ dbfs-logs-search npe r_pkgs --no-cat
+    $ dbfs-logs-search npe r_pkgs stderr
+    $ dbfs-logs-search --cache-clear
+    $ dbfs-logs-search --get-clusters
+    $ dbfs-logs-search --get-cache-path
 """
 
 
@@ -325,10 +338,16 @@ if __name__ == "__main__" :
         default="."
     )
     parser.add_argument(
+        "type",
+        help="The type of log file to search for",
+        nargs="?",
+        choices=["stdout", "stderr"]
+    )
+    parser.add_argument(
         "-n",
-        help="Number of files to print",
+        help="Number of files to print (per type)",
         type=int,
-        default=2
+        default=1
     )
     parser.add_argument(
         "--cache",
@@ -402,6 +421,7 @@ if __name__ == "__main__" :
     dbfs_log_search(
         cluster_pattern=args.cluster_pattern,
         file_pattern=args.file_pattern,
+        type=args.type,
         n=args.n,
         cache=args.cache,
         force=args.force,
