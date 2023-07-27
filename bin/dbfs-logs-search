@@ -12,6 +12,7 @@ import os
 import re
 import argparse
 import pandas as pd
+import numpy as np
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
@@ -65,13 +66,16 @@ def dbfs_log_search(
     elif isinstance(type, str) :
         type = [type]
     
+    if n == 0 :
+        n = 1
+    
     n = n * len(type)
     assert [t in ["stdout", "stderr"] for t in type]
     df = df[df["type"].isin(type)]
 
-    df = df.sort_values("datetime", ascending=False)
     ## unique by datetime, script, type
     df = df.drop_duplicates(["datetime", "script", "type"])
+    df = df.sort_values("datetime", ascending=False)
     df = df.reset_index(drop=True)
     if verbose :
         print(f"Found {len(df)} files")
@@ -89,6 +93,12 @@ def dbfs_log_search(
             print(f"Showing first {n} files")
         df = df[0:n]
 
+    if verbose or not cat :
+        # add extra whitespace to path to make characters the same
+        print_df = df.copy()
+        print_df["path"] = df["path"].str.ljust(np.max(df["path"].str.len()) + 1)
+        print(print_df[["datetime", "path"]].to_string(index=False, justify="left"))
+    
     if cat :
         for i in range(n) :
             # print with header ====
@@ -97,9 +107,6 @@ def dbfs_log_search(
             print(f"{df['datetime'][i]}")
             print("".ljust(80, "=") + "\n")
             run_stream("dbfs", "cat", df["path"][i])
-    else :
-        # print datetime and paths without index
-        print(df[["datetime", "path"]].to_string(index=False))
 
     return None
 
@@ -345,9 +352,9 @@ if __name__ == "__main__" :
     )
     parser.add_argument(
         "-n",
-        help="Number of files to print (per type)",
+        help="Number of files to print; for --get-logs-info, number of rows to print",
         type=int,
-        default=1
+        default=0
     )
     parser.add_argument(
         "--cache",
@@ -401,6 +408,18 @@ if __name__ == "__main__" :
         action=argparse.BooleanOptionalAction,
         default=False
     )
+    parser.add_argument(
+        "--get-logs-info",
+        help="Get logs info and exit",
+        action=argparse.BooleanOptionalAction,
+        default=False
+    )
+    parser.add_argument(
+        "--get-logs-path",
+        help="Get logs paths and exit",
+        action=argparse.BooleanOptionalAction,
+        default=False
+    )
     args = parser.parse_args()
 
     if args.cache_clear :
@@ -416,6 +435,44 @@ if __name__ == "__main__" :
     if args.get_cache_path :
         path = cache_path()
         print(path)
+        exit(0)
+
+    if args.get_logs_info or args.get_logs_path :
+        clusters = get_clusters(cache=args.cache, force=args.force, verbose=False)
+        # match arg.cluster
+        cluster = [cluster for cluster in clusters if re.search(args.cluster_pattern, cluster)][0]
+        df = get_logs_info(cluster=cluster, cache=args.cache, force=args.force, verbose=False)
+        # arrange by time and path
+        df = df.sort_values(["datetime", "path"], ascending=False)
+        # filter by file regex
+        df = df[df["script"].str.contains(args.file_pattern)]
+
+        # filter by type
+        if args.type is None :
+            type = ["stdout", "stderr"]
+        elif isinstance(args.type, str) :
+            type = [args.type]
+        else :
+            type = args.type
+
+        assert [t in ["stdout", "stderr"] for t in type]
+        # filter on type
+        df = df[df["type"].isin(type)]
+        
+        # filter by n
+        if args.n > 0 :
+            df = df[0:args.n]
+        
+        if args.get_logs_info :
+            # convert all columns to string
+            df = df.applymap(str)
+            # left align all columns
+            df = df.apply(lambda x: x.str.ljust(x.str.len().max()), axis=0)
+            print(df.to_string(justify="left", index=False))
+        elif args.get_logs_path :
+            paths = df["path"].tolist()
+            print("\n".join(paths))
+
         exit(0)
 
     dbfs_log_search(
