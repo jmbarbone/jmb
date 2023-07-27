@@ -32,7 +32,10 @@ def dbfs_log_search(
     os.makedirs(cache_dir, exist_ok=True)
 
     cache_path = os.path.join(cache_dir, "clusters.json")
-    cache_path_time = os.path.getmtime(cache_path)
+    try :
+        cache_path_time = os.path.getmtime(cache_path)
+    except FileNotFoundError :
+        cache_path_time = 0
     if (
         cache
         and not force
@@ -65,7 +68,10 @@ def dbfs_log_search(
 
     cluster = clusters[0]
     cache_path = os.path.join(cache_dir, cluster + ".pkl")
-    cache_path_time = os.path.getmtime(cache_path)
+    try :
+        cache_path_time = os.path.getmtime(cache_path)
+    except FileNotFoundError :
+        cache_path_time = 0
     if ( 
         cache 
         and not force
