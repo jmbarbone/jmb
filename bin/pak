@@ -1,19 +1,11 @@
 #!/usr/bin/env -S Rscript --vanilla
 
-# check if scibe is installed
-
-if (!requireNamespace("scribe", quietly = TRUE)) {
-  warning(
-    "pak is not installed, try:\n",
-    "$ pak-install",
-    call. = FALSE
-  )
-  q()
-}
-
 # pak for pak
 
-if (!isTRUE(try(packageVersion("scribe") <= "0.2"))) {
+if (
+  !isTRUE(try(packageVersion("scribe") <= "0.2")) &&
+  !any(c("--update-scribe", "--update-scribe-dev") %in% commandArgs())
+) {
   warning(
     "some features may not work properly, try:\n",
     "$ pak --update-scribe",
@@ -27,10 +19,15 @@ library(scribe)
 ca <- command_args()
 
 ca$add_description("pak : R package installation")
-ca$add_description("console wrapper for calling pak::pak() from R, with some extra features")
+ca$add_description(
+  "console wrapper for calling pak::pak() from R, with some extra features"
+)
 
 ca$add_example("pak fuj", "install {fuj} from CRAN")
-ca$add_example("pak --d true -u github::tidyverse/dplyr github::tidyverse/tidyr", "install dev packages")
+ca$add_example(
+  "pak --d true -u github::tidyverse/dplyr github::tidyverse/tidyr",
+  "install dev packages"
+)
 
 ca$add_argument(
   "...",
@@ -106,6 +103,11 @@ ca$add_argument(
   default = TRUE,
   action = "flag",
   info = "sets options(pak.no_extra_messages)"
+)$add_argument(
+  "--install-pak",
+  action = "flag",
+  default = FALSE,
+  info = "Early exit to install CRAN version of {pak}"
 )
 
 args <- ca$parse()
@@ -117,6 +119,24 @@ if (args$update_scribe) {
 
 if (args$update_scribe_dev) {
   pak::pak("github::jmbarbone/scribe")
+  quit()
+}
+
+if (args$install_pak) {
+  pak_install <- Sys.which("pak-install")
+  if (!nzchar(pak_install)) {
+    stop("pak-install not found in PATH")
+  }
+  system2(pak_install)
+  quit()
+}
+
+if (!requireNamespace("pak", quietly = TRUE)) {
+  warning(
+    "pak is not installed, try:\n",
+    "$ pak --install-pak",
+    call. = FALSE
+  )
   quit()
 }
 
