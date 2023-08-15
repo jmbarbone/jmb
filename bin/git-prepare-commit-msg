@@ -8,7 +8,8 @@ if (!requireNamespace("Rprofile", quietly = TRUE)) {
   )
 }
 
-ca <- scribe::command_args()
+library(scribe)
+ca <- command_args()
 ca$add_argument("-p", "--path",      default = ".")
 ca$add_argument("-m", "--method",    default = "github")
 ca$add_argument("-o", "--overwrite", action = "flag")

@@ -3,11 +3,11 @@
 # Create a new RStudio project in the current directory
 
 field <- function(x) {
-    if (is.na(x)) {
-        return(list())
-    }
+  if (is.na(x)) {
+    return(list())
+  }
 
-    yaml::read_yaml(x)
+  yaml::read_yaml(x)
 }
 
 library(scribe)
@@ -15,10 +15,10 @@ ca <- command_args()
 ca$add_description("A wrapper for usethis::create_package()")
 ca$add_argument("path", info = "Name of the new project")
 ca$add_argument(
-    "--fields",
-    default = list(),
-    convert = field,
-    info = "Path to a YAML file containing fields to fill in DESCRIPTION"
+  "--fields",
+  default = list(),
+  convert = field,
+  info = "Path to a YAML file containing fields to fill in DESCRIPTION"
 )
 ca$add_argument("--rstudio", default = rstudioapi::isAvailable())
 ca$add_argument("--roxygen", default = TRUE)

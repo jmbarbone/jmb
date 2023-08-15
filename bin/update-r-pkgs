@@ -1,6 +1,7 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
-ca <- scribe::command_args()
+library(scribe)
+ca <- command_args()
 ca$add_argument("...", "ignore", default = character())
 ca$add_argument("-u", "--upgrade", action = "flag", default = FALSE)
 ca$add_argument("-d", "--dep", "--dependencies", default = NA)
