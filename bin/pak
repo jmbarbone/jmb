@@ -2,9 +2,147 @@
 
 # pak for pak
 
+library(scribe)
+
+args <- try(silent = TRUE, expr = (
+  command_args()
+  $add_description("pak : R package installation")
+  $add_description(
+    "console wrapper for calling pak::pak() from R, with some extra features"
+  )
+  $add_example("pak fuj", "install {fuj} from CRAN")
+  $add_example(
+    "pak -d true -u github::tidyverse/dplyr github::tidyverse/tidyr",
+    "install dev packages"
+  )
+  $add_argument(
+    "...",
+    "pkg",
+    default = "local::.",
+    info = "packages to install (default: local::.)"
+  )
+  $add_argument(
+    "-d",
+    "--dep",
+    "--dependencies",
+    default = NA,
+    info = "dependencies (coerced)"
+  )
+  $add_argument(
+    "-u", 
+    "--upgrade",
+    action = "flag",
+    default = FALSE,
+    info = "use most recent version of packages"
+  )
+  $add_argument(
+    "--update",
+    action = "flag",
+    default = TRUE,
+    info = "install new versions of packages"
+  )
+  $add_argument(
+    "--sysreqs",
+    action = "flag",
+    default = FALSE,
+    info = "Tries to install system requirements"
+  )
+  $add_argument(
+    "-e",
+    "--echo",
+    action = "flag",
+    default = FALSE,
+    info = "Echo the lock file"
+  )
+  $add_argument(
+    "--lib",
+    action = "list",
+    default = .libPaths()[1],
+    info = "library location for plan and installation"
+  )
+  $add_argument(
+    "--lib-create",
+    action = "list",
+    default = NULL,
+    info = c(
+      "library location used for creating installation plan",
+      "when NULL defaults to --lib-loc"
+    )
+  )
+  $add_argument(
+    "--lib-install",
+    action = "list",
+    default = NULL,
+    info = c(
+      "library location to install pkgs",
+      "defaults to --lib-loc"
+    )
+  )
+  $add_argument(
+    "--cran-repos",
+    default = Sys.getenv("CRAN_REPOS", "https://cloud.r-project.org"),
+    action = "list",
+    info = "Sets the repository"
+  )
+  $add_argument(
+    "--extra-messages",
+    default = TRUE,
+    action = "flag",
+    info = "sets options(pak.no_extra_messages)"
+  )
+  $add_argument(
+    "--install-pak",
+    action = "flag",
+    default = FALSE,
+    info = "Early exit to install CRAN version of {pak}"
+  )
+  $add_argument(
+    "--update-scribe",
+    action = "flag",
+    options = list(no = FALSE),
+    info = "Early exit to install CRAN version of {scribe}"
+  )
+  $add_argument(
+    "--update-scribe-dev",
+    action = "flag",
+    options = list(no = FALSE),
+    info = "Early exit to install development version of {scribe} from GitHub"
+  )
+  $parse()
+))
+
+if (inherits(args, "try-error")) {
+  ca <- commandArgs()
+  args$update_scribe <- "--update-scribe" %in% ca
+  args$update_scribe_dev <- "--update-scribe-dev" %in% ca
+  fail <- TRUE
+  warning("failed to parse arguments")
+} else {
+  fail <- FALSE
+}
+
+if (args$install_pak) {
+  pak_install <- Sys.which("pak-install")
+  if (!nzchar(pak_install)) {
+    warning("pak-install not found in PATH")
+  } else {
+    system2(pak_install)
+  }
+  quit()
+}
+
+if (!requireNamespace("pak", quietly = TRUE)) {
+  warning(
+    "pak is not installed, try:\n",
+    "$ pak --install-pak",
+    call. = FALSE
+  )
+  quit()
+}
+
 if (
   !isTRUE(try(packageVersion("scribe") <= "0.2")) &&
-  !any(c("--update-scribe", "--update-scribe-dev") %in% commandArgs())
+  !(args$update_scribe || args$update_scribe_dev)
 ) {
   warning(
     "some features may not work properly, try:\n",
@@ -14,103 +152,6 @@ if (
     call. = FALSE
   )
 }
-
-library(scribe)
-ca <- command_args()
-
-ca$add_description("pak : R package installation")
-ca$add_description(
-  "console wrapper for calling pak::pak() from R, with some extra features"
-)
-
-ca$add_example("pak fuj", "install {fuj} from CRAN")
-ca$add_example(
-  "pak --d true -u github::tidyverse/dplyr github::tidyverse/tidyr",
-  "install dev packages"
-)
-
-ca$add_argument(
-  "...",
-  "pkg",
-  default = "local::.",
-  info = "packages to install (default: local::.)"
-)$add_argument(
-  "-d",
-  "--dep",
-  "--dependencies",
-  default = NA,
-  info = "dependencies (coerced)"
-)$add_argument(
-  "-u", 
-  "--upgrade",
-  action = "flag",
-  default = FALSE,
-  info = "use most recent version of packages"
-)$add_argument(
-  "--update",
-  action = "flag",
-  default = TRUE,
-  info = "install new versions of packages"
-)$add_argument(
-  "--sysreqs",
-  action = "flag",
-  default = FALSE,
-  info = "Tries to install system requirements"
-)$add_argument(
-  "-e",
-  "--echo",
-  action = "flag",
-  default = FALSE,
-  info = "Echo the lock file"
-)$add_argument(
-  "--lib",
-  action = "list",
-  default = .libPaths()[1],
-  info = "library location for plan and installation"
-)$add_argument(
-  "--lib-create",
-  action = "list",
-  default = NULL,
-  info = c(
-    "library location used for creating installation plan",
-    "when NULL defaults to --lib-loc"
-  )
-)$add_argument(
-  "--lib-install",
-  action = "list",
-  default = NULL,
-  info = c(
-    "library location to install pkgs",
-    "defaults to --lib-loc"
-  )
-)$add_argument(
-  "--update-scribe",
-  action = "flag",
-  options = list(no = FALSE),
-  info = "Early exit to install CRAN version of {scribe}"
-)$add_argument(
-  "--update-scribe-dev",
-  action = "flag",
-  options = list(no = FALSE),
-  info = "Early exit to install development version of {scribe} from GitHub"
-)$add_argument(
-  "--cran-repos",
-  default = Sys.getenv("CRAN_REPOS", "https://cloud.r-project.org"),
-  action = "list",
-  info = "Sets the repository"
-)$add_argument(
-  "--extra-messages",
-  default = TRUE,
-  action = "flag",
-  info = "sets options(pak.no_extra_messages)"
-)$add_argument(
-  "--install-pak",
-  action = "flag",
-  default = FALSE,
-  info = "Early exit to install CRAN version of {pak}"
-)
-
-args <- ca$parse()
 
 if (args$update_scribe) {
   pak::pak("scribe")
@@ -122,21 +163,8 @@ if (args$update_scribe_dev) {
   quit()
 }
 
-if (args$install_pak) {
-  pak_install <- Sys.which("pak-install")
-  if (!nzchar(pak_install)) {
-    stop("pak-install not found in PATH")
-  }
-  system2(pak_install)
-  quit()
-}
-
-if (!requireNamespace("pak", quietly = TRUE)) {
-  warning(
-    "pak is not installed, try:\n",
-    "$ pak --install-pak",
-    call. = FALSE
-  )
+if (fail) {
+  warning(attr(args, "condition"))
   quit()
 }
 
@@ -207,3 +235,4 @@ print_eval <- function(fun, ...) {
 }
 
 do.call(pak_install, args)
+quit()
