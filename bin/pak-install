@@ -12,42 +12,48 @@ if (!requireNamespace("scribe", quietly = TRUE)) {
 options(pak.no_extra_messages = TRUE)
 
 library(scribe)
-ca <- command_args()
-ca$add_argument(
+args <- 
+command_args() $
+add_argument(
   "...",
   "source",
   action = "dots",
   default = "cran",
   options = list(choices = c("cran", "source")),
   info = "Source to install"
-)$add_argument(
+) $
+add_argument(
   "--pkg-type",
   default = .Platform$pkgType
-)$add_argument(
+) $
+add_argument(
   "--os",
   default = R.Version()$os,
   info = "operating system"
-)$add_argument(
+) $
+add_argument(
   "--arch",
   default = R.Version()$arch
-)$add_argument(
+) $
+add_argument(
   "-d",
   "--dependencies",
   default = NA
-)$add_argument(
+) $
+add_argument(
   "-r",
   "--reinstall",
   default = FALSE,
   action = "flag",
   info = "pak pak pak"
-)$add_argument(
+) $
+add_argument(
   "--extra-messages",
   action = "flag",
   default = TRUE,
   info = "show extra pak messages"
-)
-
-args <- ca$parse()
+) $
+parse()
 
 # if on linux, check for build-essential
 if (startsWith(args$os, "linux")) {
