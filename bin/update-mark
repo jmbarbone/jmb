@@ -54,7 +54,8 @@ if (!fuj::is_windows()) {
 # main packages -- these should all play nicely with each other
 pak_pak(pkgs)
 
-# these packages are a little special right now because they require specific branches of {mark}
+# these packages are a little special right now because they require specific
+# branches of {mark}
 
 if (args$dev) {
   cat("i Installing facts, twenty\n")
