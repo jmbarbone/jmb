@@ -7,20 +7,22 @@ ca <- command_args()
 ca$add_description("cli wrapper for mark::fixmes()")
 ca$add_description("See Rscript -e \"?mark::fixmes\"")
 ca$add_argument(
-    "-P",
-    "--pattern",
-    default = NULL,
-    info = "R, Rmd, py, qmd, and md extensions"
-)$add_argument(
-    "-p",
-    "--path",
-    default = ".",
-    info = "see ?mark::fixmes"
-)$add_argument(
-    "-f",
-    "--force",
-    action = "flag",
-    info = "see ?mark::fixmes"
+  "-P",
+  "--pattern",
+  default = NULL,
+  info = "R, Rmd, py, qmd, and md extensions"
+)
+ca$add_argument(
+  "-p",
+  "--path",
+  default = ".",
+  info = "see ?mark::fixmes"
+)
+ca$add_argument(
+  "-f",
+  "--force",
+  action = "flag",
+  info = "see ?mark::fixmes"
 )
 args <- ca$parse()
 do.call(mark::fixmes, args)

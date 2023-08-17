@@ -20,7 +20,7 @@ args <- try(silent = TRUE, {
     "pkg",
     default = "local::.",
     info = "packages to install (default: local::.)"
-  ) $ 
+  ) $
   add_argument(
     "-d",
     "--dep",
@@ -29,7 +29,7 @@ args <- try(silent = TRUE, {
     info = "dependencies (coerced)"
   ) $
   add_argument(
-    "-u", 
+    "-u",
     "--upgrade",
     action = "flag",
     default = FALSE,
