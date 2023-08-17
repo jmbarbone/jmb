@@ -1,28 +1,27 @@
 #!/usr/bin/env -S Rscript --vanilla
 
 library(scribe)
+ca <- command_args()
+ca$add_argument(
+  "--cache",
+  action = "flag",
+  default = TRUE,
+  info = "cache_clean()"
+)
+ca$add_argument(
+  "--meta",
+  action = "flag",
+  default = TRUE,
+  info = "meta_clean()"
+)
+ca$add_argument(
+  "--remove",
+  action = "flag",
+  default = FALSE,
+  info = "remove {pak}"
+)
 
-params <-
-  command_args() $
-  add_argument(
-    "--cache",
-    action = "flag",
-    default = TRUE,
-    info = "cache_clean()"
-  ) $
-  add_argument(
-    "--meta",
-    action = "flag",
-    default = TRUE,
-    info = "meta_clean()"
-  ) $
-  add_argument(
-    "--remove",
-    action = "flag",
-    default = FALSE,
-    info = "remove {pak}"
-  ) $
-  parse()
+params <- ca$parse()
 
 if (params$cache) {
   message("i cleaning cache")
