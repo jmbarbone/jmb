@@ -33,20 +33,17 @@ def dbfs_log_search(
     dbfs_configure(token=token, host=host)
 
     # retrieve cluster information
-    clusters = get_clusters(cache=cache, force=force, verbose=verbose)
-    ## print clusters on each line
-    if verbose :
-        print(f"Clusters [{len(clusters)}]:")
-        print("\n".join(clusters))
+    all_clusters = get_clusters(cache=cache, force=force, verbose=verbose)        
     
-    clusters = [cluster for cluster in clusters if re.search(cluster_pattern, cluster)]
+    clusters = [cluster for cluster in all_clusters if re.search(cluster_pattern, cluster)]
     n_clusters = len(clusters)
 
+    all_clusters = "\n".join(all_clusters)
     if n_clusters == 0 :
-        raise Exception(f"No clusters found with pattern {cluster_pattern}")
+        raise Exception(f"No clusters found with pattern '{cluster_pattern}', expected one of: {all_clusters}")
 
     if n_clusters > 1 :
-        raise Exception(f"Found {n} clusters, expected 1: {clusters}")
+        raise Exception(f"Found {n} clusters, expected one of: {all_clusters}")
 
     cluster = clusters[0]
     
@@ -56,7 +53,7 @@ def dbfs_log_search(
     ## get time offset
     offset = time.altzone
     ## convert to local time
-    df["datetime"] = df["datetime"] - pd.Timedelta(seconds=offset)
+    df["localtime"] = df["datetime"] - pd.Timedelta(seconds=offset)
     
     ## filter by file regex
     df = df[df["script"].str.contains(file_pattern)]
@@ -97,17 +94,18 @@ def dbfs_log_search(
         # add extra whitespace to path to make characters the same
         print_df = df.copy()
         print_df["path"] = df["path"].str.ljust(np.max(df["path"].str.len()) + 1)
-        print(print_df[["datetime", "path"]].to_string(index=False, justify="left"))
+        print(print_df[["localtime", "path"]].to_string(index=False, justify="left"))
     
     if cat :
         for i in range(n) :
             # print with header ====
             print("\n" + "".ljust(80, "="))
             # print out information
-            print(f"datetime: {df['datetime'][i]}")
-            print(f"script  : {df['script'][i]}")
-            print(f"type    : {df['type'][i]}")
-            print(f"path    : {df['path'][i]}")
+            print(f"datetime  : {df['datetime'][i]} UTC")
+            print(f"localtime : {df['localtime'][i]} local")
+            print(f"script    : {df['script'][i]}")
+            print(f"type      : {df['type'][i]}")
+            print(f"path      : {df['path'][i]}")
             print("".ljust(80, "=") + "\n")
             run_stream("dbfs", "cat", df["path"][i])
 
