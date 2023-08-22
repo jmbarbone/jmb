@@ -1,5 +1,7 @@
 #!/usr/bin/env -S Rscript --vanilla
 
+SCRIBE_VERSION <- "0.2.0"
+
 # pak for pak
 
 library(scribe)
@@ -146,19 +148,6 @@ if (!requireNamespace("pak", quietly = TRUE)) {
   quit()
 }
 
-if (
-  !isTRUE(try(packageVersion("scribe") <= "0.2")) &&
-  !(args$update_scribe || args$update_scribe_dev)
-) {
-  warning(
-    "some features may not work properly, try:\n",
-    "$ pak --update-scribe",
-    "\n...or\n",
-    "$ pak --update-scribe-dev",
-    call. = FALSE
-  )
-}
-
 if (args$update_scribe) {
   pak::pak("scribe")
   quit()
@@ -169,6 +158,20 @@ if (args$update_scribe_dev) {
   quit()
 }
 
+scribe_version <- try(packageVersion("scribe"), silent = TRUE)
+if (
+  inherits(scribe_version, "try-error") ||
+  scribe_version < SCRIBE_VERSION
+) {
+  warning(
+    "some features may not work properly, try:\n",
+    "$ pak --update-scribe",
+    "\n...or\n",
+    "$ pak --update-scribe-dev",
+    call. = FALSE
+  )
+}
+
 if (fail) {
   warning(attr(args, "condition"))
   quit()
@@ -177,8 +180,8 @@ if (fail) {
 pak_install <- function(
   pkgs,
   lib = .libPaths()[1],
-  upgrade = FALSE,
-  dependencies = NA,
+  upgrade = NA,         # check pkgs == "local::."
+  dependencies = NULL,  # check pkgs == "local::."
   update = TRUE,
   sysreqs = FALSE,
   echo = FALSE,
@@ -206,6 +209,22 @@ pak_install <- function(
     Sys.setenv(PKG_SYSREQS = "true")
   } else {
     Sys.setenv(PKG_SYSREQS = "false")
+  }
+
+  if (is.null(dependencies)) {
+    if (identical(pkgs, "local::.")) {
+      dependencies <- TRUE
+    } else {
+      dependencies <- NA
+    }
+  }
+
+  if (is.na(upgrade)) {
+    if (identical(pkgs, "local::.")) {
+      upgrade <- TRUE
+    } else {
+      upgrade <- FALSE
+    }
   }
 
   lockfile <- tempfile()
