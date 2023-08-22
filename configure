@@ -36,5 +36,16 @@ echo "i installing pak and scribe"
 Rscript --vanilla -e "if (!requireNamespace('scribe')) utils::install.packages('scribe')"
 ./bin/pak-install source
 
+# TODO replace SCRIBE_VERSION with cran version
+SCRIBE_VERSION=$(Rscript --vanilla \
+    -e "lines <- readLines('https://cran.r-project.org/web/packages/scribe/index.html')" \
+    -e "version <- lines[grep('Version', lines) + 1L]" \
+    -e "m <- gregexpr('[0-9]?[.][0-9]?([.][0-9]?)?', version)" \
+    -e "cat(as.character(numeric_version(regmatches(version, m)[[1]])))"
+)
+
+# update line in bin/pak
+sed -i "s/SCRIBE_VERSION <- .*/SCRIBE_VERSION <- \"$SCRIBE_VERSION\"/g" bin/pak
+
 echo "i done"
 echo "i best to restart console"
