@@ -5,61 +5,68 @@
 library(scribe)
 
 args <- try(silent = TRUE, {
-  command_args() $
-  add_description("pak : R package installation") $
-  add_description(
+  ca <- command_args()
+  ca$add_description("pak : R package installation")
+  ca$add_description(
     "console wrapper for calling pak::pak() from R, with some extra features"
-  ) $
-  add_example("pak fuj", "install {fuj} from CRAN") $
-  add_example(
+  )
+  ca$add_example("pak fuj", "install {fuj} from CRAN")
+  ca$add_example(
     "pak -d true -u github::tidyverse/dplyr github::tidyverse/tidyr",
     "install dev packages"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "...",
-    "pkg",
+    "pkgs",
     default = "local::.",
     info = "packages to install (default: local::.)"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "-d",
     "--dep",
     "--dependencies",
-    default = NA,
-    info = "dependencies (coerced)"
-  ) $
-  add_argument(
+    default = NULL,
+    info = c(
+      "dependencies (coerced).",
+      " Defaults to TRUE when pkgs is 'local::.', otherwise NA"
+    )
+  )
+  ca$add_argument(
     "-u",
     "--upgrade",
     action = "flag",
-    default = FALSE,
-    info = "use most recent version of packages"
-  ) $
-  add_argument(
+    default = NA,
+    info = c(
+      "use most recent version of packages, TRUE when pkgs is 'local::.'",
+      " otherwise FALSE"
+    )
+  )
+  ca$add_argument(
     "--update",
     action = "flag",
     default = TRUE,
     info = "install new versions of packages"
-  ) $ add_argument(
+  )
+  ca$add_argument(
     "--sysreqs",
     action = "flag",
     default = FALSE,
     info = "Tries to install system requirements"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "-e",
     "--echo",
     action = "flag",
     default = FALSE,
     info = "Echo the lock file"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "--lib",
     action = "list",
     default = .libPaths()[1],
     info = "library location for plan and installation"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "--lib-create",
     action = "list",
     default = NULL,
@@ -67,8 +74,8 @@ args <- try(silent = TRUE, {
       "library location used for creating installation plan",
       "when NULL defaults to --lib-loc"
     )
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "--lib-install",
     action = "list",
     default = NULL,
@@ -76,38 +83,38 @@ args <- try(silent = TRUE, {
       "library location to install pkgs",
       "defaults to --lib-loc"
     )
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "--cran-repos",
     default = Sys.getenv("CRAN_REPOS", "https://cloud.r-project.org"),
     action = "list",
     info = "Sets the repository"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "--extra-messages",
     default = TRUE,
     action = "flag",
     info = "sets options(pak.no_extra_messages)"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "--install-pak",
     action = "flag",
     default = FALSE,
     info = "Early exit to install CRAN version of {pak}"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "--update-scribe",
     action = "flag",
     options = list(no = FALSE),
     info = "Early exit to install CRAN version of {scribe}"
-  ) $
-  add_argument(
+  )
+  ca$add_argument(
     "--update-scribe-dev",
     action = "flag",
     options = list(no = FALSE),
     info = "Early exit to install development version of {scribe} from GitHub"
-  ) $
-  parse()
+  )
+  ca$parse()
 })
 
 if (inherits(args, "try-error")) {
