@@ -255,8 +255,20 @@ pak_install <- function(
 print_eval <- function(fun, ...) {
   fun <- substitute(fun)
   call <- as.call(do.call(alist, c(fun, list(...))))
-  writeLines(format(call, width = min(getOption("width") - 4, 80)))
+  print_call(call)
   eval(as.expression(call))
+}
+
+print_call <- function(g) {
+  stopifnot(is.call(g))
+  ls <- as.list(g)
+  ls[] <- lapply(ls, deparse1)
+  cat(
+    ls[[1]], "(\n  ",
+    paste0(names(ls)[-1], " = ", ls[-1], collapse = ",\n  "),
+    "\n)\n",
+    sep = ""
+  )
 }
 
 do.call(pak_install, args)
