@@ -316,6 +316,13 @@ def cache_clear() :
     return None
 
 
+def check_dbfs() :
+    try :
+        subprocess.run(["dbfs", "--version"], check=True)
+    except FileNotFoundError :
+        raise Exception("dbfs cli not found, please install it")
+    return None
+
 EXAMPLE_TEXT = """
 examples:
     $ dbfs-logs-search npe r_pkgs
