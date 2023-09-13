@@ -52,8 +52,13 @@ ca$add_argument(
   default = TRUE,
   info = "show extra pak messages"
 )
+ca$add_argument(
+  "--lib-path",
+  default = .libPaths()[1],
+  info = "library path to install pak to"
+)
 
-args <-ca$parse()
+args <- ca$parse()
 
 # if on linux, check for build-essential
 if (startsWith(args$os, "linux")) {
@@ -82,14 +87,22 @@ switch(
   }
 )
 
-
 if (args$reinstall) {
   message("i reinstalling {pak} ", text)
-  pak::pak("pak?reinstall", dependencies = args$dependencies)
+  pak::pak(
+    "pak?reinstall",
+    dependencies = args$dependencies,
+    lib = args$lib_path
+  )
 } else {
   message("i installing {pak} ", text)
   # https://github.com/r-lib/pak#pre-built-binaries
-  utils::install.packages("pak", repos = repo, dependencies = args$dependencies)
+  utils::install.packages(
+    "pak",
+    repos = repo, 
+    dependencies = args$dependencies,
+     lib = args$lib_path
+  )
 }
 
 message("i installing {pak} extra")
