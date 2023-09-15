@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 """
-A utility function for quickly looking up log files using Databrick's dbfs cli
+A utility function for quickly looking up log files using Databrick's databricks cli
+
+Run `dbfs-logs-search --help` for more information
 """
 
 
@@ -14,6 +16,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import sys
+import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
@@ -40,10 +43,10 @@ def dbfs_log_search(
 
     all_clusters = "\n".join(all_clusters)
     if n_clusters == 0 :
-        raise Exception(f"No clusters found with pattern '{cluster_pattern}', expected one of: {all_clusters}")
+        raise Exception(f"No clusters found with pattern '{cluster_pattern}', expected one of:\n{all_clusters}")
 
     if n_clusters > 1 :
-        raise Exception(f"Found {n} clusters, expected one of: {all_clusters}")
+        raise Exception(f"Found {n} clusters, expected one of:\n{all_clusters}")
 
     cluster = clusters[0]
     
@@ -107,7 +110,7 @@ def dbfs_log_search(
             print(f"type      : {df['type'][i]}")
             print(f"path      : {df['path'][i]}")
             print("".ljust(80, "=") + "\n")
-            run_stream("dbfs", "cat", df["path"][i])
+            run_stream("databricks", "fs", "cat", df["path"][i])
 
     return None
 
@@ -145,7 +148,7 @@ def get_clusters(
 
         clusters = pd.read_json(path)["clusters"]
     else :
-        clusters = run_output("dbfs", "ls", "dbfs:/cluster-logs")
+        clusters = run_output("databricks", "fs", "ls", "dbfs:/cluster-logs")
         # save clusters
         pd.DataFrame({"clusters" : clusters}).to_json(path)
     
@@ -193,7 +196,7 @@ def get_logs_info(
         print("Searching for logs...")
     
     info = {}
-    dirs = run_output("dbfs", "ls", "--absolute", f"dbfs:/cluster-logs/{cluster}/init_scripts")
+    dirs = run_output("databricks", "fs", "ls", "--absolute", f"dbfs:/cluster-logs/{cluster}/init_scripts")
     n_dirs = len(dirs)
 
     # perform asynchronously
@@ -236,7 +239,7 @@ def get_info(dir) -> dict :
     # path: 20230725_190947_00_update_system_packages.sh.stderr.log
     # starts with date time
     # ends with script name
-    files = run_output("dbfs", "ls", dir)
+    files = run_output("databricks", "fs", "ls", dir)
     # extract datetime from beginning of path, first 15 characters
     datetimes = [file[0:15] for file in files]
     datetimes = [pd.to_datetime(datetime, format="%Y%m%d_%H%M%S") for datetime in datetimes]
@@ -284,7 +287,7 @@ def dbfs_configure(
     if token is None :
         return None
     
-    token = keyring.get_password("dbfs", host)
+    token = keyring.get_password("databricks", host)
     if token is None :
         raise Exception(f"No token found with host {host}")
 
@@ -296,7 +299,7 @@ def dbfs_configure(
     with temp as f :
         f.writelines(token)
 
-    args = ["dbfs", "configure", "--host", host, "--token-file", temp.name]
+    args = ["databricks", "configure", "--host", host, "--token-file", temp.name]
     subprocess.run(args, check=True)
     os.unlink(temp.name)
     return None
@@ -318,9 +321,9 @@ def cache_clear() :
 
 def check_dbfs() :
     try :
-        subprocess.run(["dbfs", "--version"], check=True)
+        subprocess.run(["databricks", "--version"], check=True)
     except FileNotFoundError :
-        raise Exception("dbfs cli not found, please install it")
+        raise Exception("databricks cli not found, please install it")
     return None
 
 EXAMPLE_TEXT = """
