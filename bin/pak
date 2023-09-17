@@ -2,6 +2,16 @@
 
 SCRIBE_VERSION <- "0.2.0"
 
+dot_lib_paths <- function() {
+  user <- Sys.getenv("SUDO_USER")
+  if (!nzchar(user)) {
+    return(.libPaths())
+  }
+  
+  args <- c("-i -u", user, "Rscript -e 'cat(.libPaths())'")
+  system2("sudo", args, stdout = TRUE)
+}
+
 # pak for pak
 
 library(scribe)
@@ -65,7 +75,7 @@ args <- try(silent = TRUE, {
   ca$add_argument(
     "--lib",
     action = "list",
-    default = .libPaths()[1],
+    default = dot_lib_paths()[1],
     info = "library location for plan and installation"
   )
   ca$add_argument(
@@ -179,7 +189,7 @@ if (fail) {
 
 pak_install <- function(
   pkgs,
-  lib = .libPaths()[1],
+  lib = dot_lib_paths()[1],
   upgrade = NA,         # check pkgs == "local::."
   dependencies = NULL,  # check pkgs == "local::."
   update = TRUE,
