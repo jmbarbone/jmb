@@ -47,5 +47,26 @@ SCRIBE_VERSION=$(Rscript --vanilla \
 # update line in bin/pak
 sed -i "s/SCRIBE_VERSION <- .*/SCRIBE_VERSION <- \"$SCRIBE_VERSION\"/g" bin/pak
 
+# add symbolic link on linux and when in sudo
+if [[ $(uname) == 'Linux' ]]
+then
+    # warn when not root
+    if [[ $(whoami) != 'root' ]]
+    then
+        echo "w not root, will not add symbolic link"
+    else
+        echo "i adding symbolic link"
+        mkdir -p /usr/local/jmb/bin
+        sudo ln -s $JMB/bin/ /usr/local/jmb/bin
+
+        # check secure_path
+        if [[ $(sudo cat /etc/sudoers | grep secure_path | grep -c /usr/local/jmb/bin) == 0 ]]
+        then
+            echo "i adding jmb/bin to secure_path"
+            sudo sed -i "s/secure_path=.*/secure_path=\"\/usr\/local\/jmb\/bin:${PATH}\"/g" /etc/sudoers
+        fi
+    fi
+fi
+
 echo "i done"
 echo "i best to restart console"
