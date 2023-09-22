@@ -33,8 +33,17 @@ dos2unix bin/dos2unix-dir
 ./bin/dos2unix-dir bin
 
 echo "i installing pak and scribe"
-Rscript --vanilla -e "if (!requireNamespace('scribe')) utils::install.packages('scribe')"
-./bin/pak-install source
+
+R --vanilla <<EOF
+lib_path <- file.path(dirname(.Library.site[1]), "pak-library")
+Sys.setenv(R_LIB_PAK = lib_path)
+dir.createlib_path, recursive = TRUE, showWarnings = FALSE)
+if (!requireNamespace("pak", lib.loc = lib_path)) {
+  utils::install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/", lib = pak_lib)
+}
+EOF
+
+./bin/pak-install source --lib-loc $R_LIB_PAK
 
 # TODO replace SCRIBE_VERSION with cran version
 SCRIBE_VERSION=$(Rscript --vanilla \
