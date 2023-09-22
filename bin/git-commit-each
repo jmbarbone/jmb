@@ -25,6 +25,11 @@ def main(
     # split statuses into a list of tuples
     statuses = [tuple(line.split(" ", maxsplit=1)) for line in statuses]
 
+    if len(statuses) == 0 :
+        if verbose :
+            print("i nothing to commit")
+        return None
+
     for status in statuses :
         match status[0] :
             case "M" :
