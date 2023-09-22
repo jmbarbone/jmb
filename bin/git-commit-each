@@ -1,0 +1,64 @@
+#! /usr/bin/env python3
+
+"""
+For each changed file, commit with a message of the form:
+- "Update <filename>"
+- "Add <filename>"
+- "Remove <filename>"
+"""
+
+
+import argparse
+import subprocess
+import os
+
+
+def main(
+        path: str = ".", 
+        verbose: bool = True,
+        execute: bool = True
+) -> None :
+    os.chdir(path)
+    statuses = subprocess.run(["git", "status", "--porcelain"], stdout=subprocess.PIPE, cwd=path)
+    statuses = statuses.stdout.decode().split("\n")
+    statuses = [line.strip() for line in statuses if line.strip() != ""]
+    # split statuses into a list of tuples
+    statuses = [tuple(line.split(" ", maxsplit=1)) for line in statuses]
+
+    for status in statuses :
+        match status[0] :
+            case "M" :
+                message = f"Update {status[1]}"
+            case "??" :
+                message = f"Add {status[1]}"
+            case "D" :
+                message = f"Remove {status[1]}"
+            case _ :
+                raise ValueError(f"x unknown status line: {status}")
+
+        if verbose :
+            print(f"i committing {status[1]} with message '{message}'")
+        
+        if execute :
+            subprocess.run(["git", "add", status[1]])
+            subprocess.run(["git", "commit", "-m", message])
+    
+    if verbose :
+        print("i remember to push changes to remote")
+
+    return None
+
+
+if __name__ == "__main__" :
+    parser = argparse.ArgumentParser(description="Commit each changed file")
+    parser.add_argument('-p', '--path', default='.', help="Path to the repository")
+    parser.add_argument('-q', '--quiet', action='store_true', help="Suppress output")
+    parser.add_argument('-n', '--dry-run', action='store_true', help="Don't actually commit")
+    args = parser.parse_args()
+
+    main(
+        path=args.path,
+        verbose=not args.quiet,
+        execute=not args.dry_run
+    )
+ 
