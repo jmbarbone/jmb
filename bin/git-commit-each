@@ -31,21 +31,26 @@ def main(
         return None
 
     for status in statuses :
+        path = status[1]
+        # strip when wrapped in quotes
+        if path[0] == "\"" and path[-1] == "\"" :
+            path = path[1:-1]
+        
         match status[0] :
             case "M" :
-                message = f"Update {status[1]}"
+                message = f"Update {path}"
             case "??" :
-                message = f"Add {status[1]}"
+                message = f"Add {path}"
             case "D" :
-                message = f"Remove {status[1]}"
+                message = f"Remove {path}"
             case _ :
                 raise ValueError(f"x unknown status line: {status}")
 
         if verbose :
-            print(f"i committing {status[1]} with message '{message}'")
+            print(f"i committing {path} with message '{message}'")
         
         if execute :
-            subprocess.run(["git", "add", status[1]])
+            subprocess.run(["git", "add", path])
             subprocess.run(["git", "commit", "-m", message])
     
     if verbose :
