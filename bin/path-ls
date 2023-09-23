@@ -1,0 +1,52 @@
+#!/usr/bin/env -S Rscript --vanilla 
+
+library(scribe)
+ca <- scribe::command_args()
+ca$add_description("List all files in the PATH environment variable")
+ca$add_argument(
+  "-g", "--glob",
+  default = NULL,
+  action = "list",
+  info = "Show only files matching the glob pattern"
+)
+ca$add_argument(
+  "-r", "--regex",
+  info = "Show only files matching the regex pattern",
+  action = "list",
+  default = NULL
+)
+ca$add_argument(
+  "-i", "--invert",
+  info = "Invert the match",
+  action = "flag",
+  default = FALSE
+)
+
+args <- ca$parse()
+
+path_ls <- function(
+    glob = NULL,
+    regexp = NULL,
+    all = FALSE,
+    invert = FALSE
+) {
+  paths <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
+  res <- suppressWarnings(fs::dir_ls(paths, fail = FALSE))
+  res <- unique(basename(res))
+
+  # borrowed from fs::path_filter()
+  if (!is.null(glob)) {
+    if (!is.null(regexp)) {
+      warning("Both glob and regex are specified, only glob will be used")
+    }
+    regexp <- utils::glob2rx(glob)
+  }
+
+  if (!is.null(regexp)) {
+    res <- grep(x = res, pattern = regexp, value = TRUE, invert = invert)
+  }
+
+  res
+}
+
+writeLines(do.call(path_ls, args))
