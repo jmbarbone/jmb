@@ -4,16 +4,14 @@ library(scribe)
 ca <- scribe::command_args()
 ca$add_description("List all files in the PATH environment variable")
 ca$add_argument(
-  "-g", "--glob",
-  default = NULL,
-  action = "list",
-  info = "Show only files matching the glob pattern"
+  "pattern",
+  default = "*",
+  info = "Show only files matching this regular expression"
 )
 ca$add_argument(
-  "-r", "--regex",
-  info = "Show only files matching the regex pattern",
-  action = "list",
-  default = NULL
+  "-g", "--glob",
+  info = "Interpret pattern as a glob pattern",
+  action = "flag"
 )
 ca$add_argument(
   "-i", "--invert",
@@ -22,31 +20,35 @@ ca$add_argument(
   default = FALSE
 )
 
-args <- ca$parse()
-
 path_ls <- function(
-    glob = NULL,
-    regexp = NULL,
-    all = FALSE,
+    pattern = NULL,
+    glob = FALSE,
     invert = FALSE
 ) {
   paths <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
   res <- suppressWarnings(fs::dir_ls(paths, fail = FALSE))
   res <- unique(basename(res))
 
-  # borrowed from fs::path_filter()
-  if (!is.null(glob)) {
-    if (!is.null(regexp)) {
-      warning("Both glob and regex are specified, only glob will be used")
-    }
-    regexp <- utils::glob2rx(glob)
+  if (glob) {
+    pattern <- utils::glob2rx(pattern)
   }
 
-  if (!is.null(regexp)) {
-    res <- grep(x = res, pattern = regexp, value = TRUE, invert = invert)
+  # patterns that mean "everything
+  if (pattern %in% c("*", ".*", ".") || grepl("^\\^[.*]+$", pattern)) {
+    return(res)
+  }
+
+  if (crayon::has_color()) {
+    m <- regexpr(pattern, res, ignore.case = TRUE, perl = TRUE)
+    rs <- regmatches(res, m, invert = invert)
+    regmatches(res, m, invert = invert) <- lapply(rs, crayon::green) 
+    res <- res[m > 0]
+  } else {
+    res <- grep(x = res, pattern = pattern, value = TRUE, invert = invert)
   }
 
   res
 }
 
-writeLines(do.call(path_ls, args))
+args <- ca$parse()
+cat(do.call(path_ls, args), sep = "\n")
