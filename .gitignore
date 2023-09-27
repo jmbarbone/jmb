@@ -2,3 +2,4 @@
 .vscode/settings.json
 ignore/*
 .databricks/project.json
+.Rproj.user
