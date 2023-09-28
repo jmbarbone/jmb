@@ -33,10 +33,22 @@ ca$add_argument(
 ca$add_argument(
   "-n",
   info = "Which latest change (1 = most recent, 2 = second most recent, ...)",
-  default = 1L
+  convert = function(x) {
+    if (grepl(":", x)) {
+      eval(parse(text = x))
+    } else if (grepl(",", x)) {
+      eval(parse(text = paste0("c(", x, ")")))
+    } else {
+      as.integer(x)
+    }
+  }
 )
 
 args <- ca$parse()
+if (is.null(args$n)) {
+  # TODO replace when scribe#70 is fixed
+  args$n <- 1L
+}
 
 stopifnot(
   nzchar(args$issue),
@@ -59,16 +71,18 @@ data <-
   req_perform() |>
   resp_body_json()
 
-latest <-
+values <-
   data$changelog$histories |>
   map("items") |>
   map(~map_chr(.x, "field")) |>
   map_lgl(~identical(.x, "description")) |>
-  which() |>
-  pluck(args$n)
+  which()
+
+# prevents errors, but should probably be handled with an informative message
+values <- values[intersect(seq_along(values), args$n)]
 
 compare(
-  map(data$changelog$histories, "items")[[latest]][[1]]$fromString,
-  map(data$changelog$histories, "items")[[latest]][[1]]$toString,
+  map(data$changelog$histories, "items")[[utils::head(values, 1)]][[1]]$fromString,
+  map(data$changelog$histories, "items")[[utils::tail(values, 1)]][[1]]$toString,
   max_diffs = Inf
 )
