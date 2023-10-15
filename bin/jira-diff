@@ -1,0 +1,88 @@
+#!/usr/bin/env -S Rscript --vanilla 
+
+library(scribe)
+library(httr2)
+library(purrr)
+library(waldo)
+
+ca <- command_args()
+ca$add_argument(
+  "issue",
+  info = "Jira issue id",
+  default = local({
+    branch <- system2("git", "rev-parse --abbrev-ref HEAD", stdout = TRUE)
+    m <- regexpr("^[A-Z0-9]{2,}-[0-9]+", branch)
+    regmatches(branch, m)
+  })
+)
+ca$add_argument(
+  "-u", "--username",
+  info = "Jira username",
+  default = Sys.getenv("JIRA_USERNAME")
+)
+ca$add_argument(
+  "-p", "--password",
+  info = "Jira token/password",
+  default = Sys.getenv("JIRA_TOKEN", Sys.getenv("JIRA_PASSWORD"))
+)
+ca$add_argument(
+  "-d", "--domain",
+  info = "Jira domain",
+  default = Sys.getenv("JIRA_DOMAIN")
+)
+ca$add_argument(
+  "-n",
+  info = "Which latest change (1 = most recent, 2 = second most recent, ...)",
+  convert = function(x) {
+    if (grepl(":", x)) {
+      eval(parse(text = x))
+    } else if (grepl(",", x)) {
+      eval(parse(text = paste0("c(", x, ")")))
+    } else {
+      as.integer(x)
+    }
+  }
+)
+
+args <- ca$parse()
+if (is.null(args$n)) {
+  # TODO replace when scribe#70 is fixed
+  args$n <- 1L
+}
+
+stopifnot(
+  nzchar(args$issue),
+  nzchar(args$username),
+  nzchar(args$password),
+  nzchar(args$domain),
+  args$n > 0L
+)
+
+api_url <- sprintf("%s/rest/api/2/issue/%s?expand=changelog", args$domain, args$issue)
+message("i Trying to fetch ", api_url)
+
+data <-
+  request(api_url) |>
+  req_headers(`Content-Type` = "application/json") |>
+  req_auth_basic(
+    username = args$username,
+    password = args$password
+  ) |>
+  req_perform() |>
+  resp_body_json()
+
+values <-
+  data$changelog$histories |>
+  map("items") |>
+  map(~map_chr(.x, "field")) |>
+  map_lgl(~identical(.x, "description")) |>
+  which()
+
+# prevents errors, but should probably be handled with an informative message
+values <- values[intersect(seq_along(values), args$n)]
+
+compare(
+  map(data$changelog$histories, "items")[[utils::head(values, 1)]][[1]]$fromString,
+  map(data$changelog$histories, "items")[[utils::tail(values, 1)]][[1]]$toString,
+  max_diffs = Inf
+)

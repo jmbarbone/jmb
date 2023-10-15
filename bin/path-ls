@@ -27,6 +27,7 @@ path_ls <- function(
 ) {
   paths <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
   res <- suppressWarnings(fs::dir_ls(paths, fail = FALSE))
+  res <- res[Sys.which(res) != ""]
   res <- unique(basename(res))
 
   if (glob) {
