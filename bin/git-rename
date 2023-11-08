@@ -2,7 +2,7 @@
 
 # https://linuxize.com/post/how-to-rename-local-and-remote-git-branch/
 # Because I can never be bothered to remember this
-# 
+#
 # git-rename main master
 
 if [[ $* == *--help* ]]
@@ -24,6 +24,7 @@ then
     echo ""
     echo "EXAMPLES"
     echo "  $ git-rename main master"
+    exit 0
 fi
 
 new=$1
@@ -34,7 +35,7 @@ git push origin -u $new
 
 
 if [[ $* == *--gh-default* ]]
-then   
+then
     gh repo edit --default-branch $new
 fi
 
