@@ -237,7 +237,7 @@ pak_install <- function(
     }
   }
 
-  lockfile <- tempfile()
+  lockfile <- normalizePath(tempfile(), "/", FALSE)
   on.exit(unlink(lockfile), add = TRUE)
 
   print_eval(
