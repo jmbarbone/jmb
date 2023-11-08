@@ -1,5 +1,6 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
+stopifnot(packageVersion("scribe") >= package_version("0.2.0"))
 library(scribe)
 library(httr2)
 library(purrr)
@@ -10,9 +11,11 @@ ca$add_argument(
   "issue",
   info = "Jira issue id",
   default = local({
-    branch <- system2("git", "rev-parse --abbrev-ref HEAD", stdout = TRUE)
-    m <- regexpr("^[A-Z0-9]{2,}-[0-9]+", branch)
-    regmatches(branch, m)
+    branch <- try(system2("git", "rev-parse --abbrev-ref HEAD", stdout = TRUE), silent = TRUE)
+    if (!inherits(branch, "try-error")) {
+      m <- regexpr("^[A-Z0-9]{2,}-[0-9]+", branch)
+      regmatches(branch, m)
+    }
   })
 )
 ca$add_argument(
@@ -33,15 +36,8 @@ ca$add_argument(
 ca$add_argument(
   "-n",
   info = "Which latest change (1 = most recent, 2 = second most recent, ...)",
-  convert = function(x) {
-    if (grepl(":", x)) {
-      eval(parse(text = x))
-    } else if (grepl(",", x)) {
-      eval(parse(text = paste0("c(", x, ")")))
-    } else {
-      as.integer(x)
-    }
-  }
+  default = 1L,
+  convert = scribe_convert("evaluate")
 )
 
 args <- ca$parse()
@@ -82,7 +78,7 @@ values <-
 values <- values[intersect(seq_along(values), args$n)]
 
 compare(
-  map(data$changelog$histories, "items")[[utils::head(values, 1)]][[1]]$fromString,
   map(data$changelog$histories, "items")[[utils::tail(values, 1)]][[1]]$toString,
+  map(data$changelog$histories, "items")[[utils::head(values, 1)]][[1]]$fromString,
   max_diffs = Inf
 )
