@@ -1,6 +1,6 @@
 #!/usr/bin/env -S Rscript --vanilla 
 
-stopifnot(packageVersion("scribe") >= package_version("0.2.0"))
+stopifnot(packageVersion("scribe") >= package_version("0.3.0"))
 library(scribe)
 library(httr2)
 library(purrr)
@@ -41,6 +41,7 @@ ca$add_argument(
 )
 
 args <- ca$parse()
+
 if (is.null(args$n)) {
   # TODO replace when scribe#70 is fixed
   args$n <- 1L
@@ -78,7 +79,7 @@ values <-
 values <- values[intersect(seq_along(values), args$n)]
 
 compare(
-  map(data$changelog$histories, "items")[[utils::tail(values, 1)]][[1]]$toString,
-  map(data$changelog$histories, "items")[[utils::head(values, 1)]][[1]]$fromString,
+  map(data$changelog$histories, "items")[[utils::head(values, 1)]][[1]]$toString,
+  map(data$changelog$histories, "items")[[utils::tail(values, 1)]][[1]]$fromString,
   max_diffs = Inf
 )
