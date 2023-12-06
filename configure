@@ -72,7 +72,7 @@ then
     else
         echo "i adding symbolic link"
         mkdir -p /usr/local/jmb/bin
-        sudo ln -s -f $JMB/bin/ /usr/local/jmb
+        sudo ln -s -f $JMB/bin/ /usr/local/jmb || true
 
         # check secure_path
         if [[ $(sudo cat /etc/sudoers | grep secure_path | grep -c /usr/local/jmb/bin) == 0 ]]
