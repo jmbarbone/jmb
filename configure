@@ -34,16 +34,22 @@ dos2unix bin/dos2unix-dir
 
 echo "i installing pak and scribe"
 
+R_LIB_PAK=$(Rscript --vanilla \
+    -e "cat(file.path(dirname(.Library.site[1]), 'pak-library'))"
+)
+
 R --vanilla <<EOF
-lib_path <- file.path(dirname(.Library.site[1]), "pak-library")
-Sys.setenv(R_LIB_PAK = lib_path)
-dir.createlib_path, recursive = TRUE, showWarnings = FALSE)
-if (!requireNamespace("pak", lib.loc = lib_path)) {
-  utils::install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/", lib = pak_lib)
+lib_pak <- "$R_LIB_PAK"
+stopifnot(nzchar(lib_pak))
+dir.create(lib_pak, recursive = TRUE, showWarnings = FALSE)
+Sys.chmod(lib_pak, "777")
+if (!requireNamespace("pak", lib.loc = lib_pak, quietly = TRUE)) {
+  utils::install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/", lib = lib_pak)
 }
 EOF
 
-./bin/pak-install source --lib-loc $R_LIB_PAK
+echo "i installing pack and scribe again"
+./bin/pak-install source --lib-path $R_LIB_PAK
 
 # TODO replace SCRIBE_VERSION with cran version
 SCRIBE_VERSION=$(Rscript --vanilla \
@@ -66,13 +72,13 @@ then
     else
         echo "i adding symbolic link"
         mkdir -p /usr/local/jmb/bin
-        sudo ln -s $JMB/bin/ /usr/local/jmb/bin
+        sudo ln -s -f $JMB/bin/ /usr/local/jmb
 
         # check secure_path
         if [[ $(sudo cat /etc/sudoers | grep secure_path | grep -c /usr/local/jmb/bin) == 0 ]]
         then
             echo "i adding jmb/bin to secure_path"
-            sudo sed -i "s/secure_path=.*/secure_path=\"\/usr\/local\/jmb\/bin:${PATH}\"/g" /etc/sudoers
+            sudo sed -i "s|secure_path = .*|secure_path = $PATH:/usr/local/jmb/bin:$JMB/bin|g" /etc/sudoers
         fi
     fi
 fi
