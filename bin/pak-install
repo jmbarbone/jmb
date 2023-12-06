@@ -87,26 +87,31 @@ switch(
   }
 )
 
-if (args$reinstall) {
-  message("i reinstalling {pak} ", text)
-  pak::pak(
-    "pak?reinstall",
-    dependencies = args$dependencies,
-    lib = args$lib_path
-  )
-} else {
+if (!args$reinstall) {
   message("i installing {pak} ", text)
   # https://github.com/r-lib/pak#pre-built-binaries
   utils::install.packages(
     "pak",
     repos = repo, 
     dependencies = args$dependencies,
-     lib = args$lib_path
+    lib = args$lib_path
+  )
+}
+
+.libPaths(args$lib_path)
+library(pak, lib.loc = args$lib_path)
+
+if (args$reinstall) {
+  message("i reinstalling {pak} ", text)
+  pak(
+    "pak?reinstall",
+    dependencies = args$dependencies,
+    lib = args$lib_path
   )
 }
 
 message("i installing {pak} extra")
-pak::pak_install_extra()
+pak_install_extra()
 
 message("i done")
 invisible()

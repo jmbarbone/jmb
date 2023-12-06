@@ -1,6 +1,6 @@
 #!/usr/bin/env -S Rscript --vanilla
 
-SCRIBE_VERSION <- "0.2.0"
+SCRIBE_VERSION <- "0.3.0"
 
 dot_lib_paths <- function() {
   user <- Sys.getenv("SUDO_USER")
