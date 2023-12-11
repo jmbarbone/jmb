@@ -73,12 +73,13 @@ then
         echo "i adding symbolic link"
         mkdir -p /usr/local/jmb/bin
         sudo ln -s -f $JMB/bin/ /usr/local/jmb || true
+        sudo chmod +x -R /usr/local/jmb/bin
 
         # check secure_path
-        if [[ $(sudo cat /etc/sudoers | grep secure_path | grep -c /usr/local/jmb/bin) == 0 ]]
+        if [[ $(sudo cat /etc/sudoers | grep secure_path | grep -c $JMB/bin) == 0 ]]
         then
             echo "i adding jmb/bin to secure_path"
-            sudo sed -i "s|secure_path = .*|secure_path = $PATH:/usr/local/jmb/bin:$JMB/bin|g" /etc/sudoers
+            sudo sed -i.bak '/secure_path/ s|$|:'$JMB'/bin|' /etc/sudoers
         fi
     fi
 fi
