@@ -54,7 +54,7 @@ ca$add_argument(
 )
 ca$add_argument(
   "--lib-path",
-  default = .libPaths()[1],
+  default = Sys.getenv("R_LIBS_PAK", "~/R/pak-library"),
   info = "library path to install pak to"
 )
 
@@ -73,10 +73,12 @@ if (startsWith(args$os, "linux")) {
 switch(
   args$source,
   cran = {
+    message("i installing {pak} from CRAN")
     repo <- c(CRAN = "https://cran.rstudio.com/")
     text <- "CRAN"
   },
   source = {
+    message("i installing {pak} from source")
     repo <- sprintf(
       "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
       args$pkg_type,
@@ -87,17 +89,21 @@ switch(
   }
 )
 
+message("i checking for libpath: ", normalizePath(args$lib_path, "/", FALSE))
+dir.create(args$lib_path, recursive = TRUE, showWarnings = FALSE)
+
 if (!args$reinstall) {
   message("i installing {pak} ", text)
   # https://github.com/r-lib/pak#pre-built-binaries
   utils::install.packages(
     "pak",
-    repos = repo, 
+    repos = repo,
     dependencies = args$dependencies,
     lib = args$lib_path
   )
 }
 
+message("i setting libpath")
 .libPaths(args$lib_path)
 library(pak, lib.loc = args$lib_path)
 
