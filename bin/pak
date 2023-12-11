@@ -8,8 +8,9 @@ dot_lib_paths <- function() {
     return(.libPaths())
   }
   
-  args <- c("-i -u", user, "Rscript -e 'cat(.libPaths())'")
-  system2("sudo", args, stdout = TRUE)
+  args <- c("-i -u", user, "Rscript -e 'writeLines(.libPaths())'")
+  res <- system2("sudo", args, stdout = TRUE)
+  res[dir.exists(res)]
 }
 
 # pak for pak
@@ -126,6 +127,12 @@ args <- try(silent = TRUE, {
     options = list(no = FALSE),
     info = "Early exit to install development version of {scribe} from GitHub"
   )
+  ca$add_argument(
+    "--lib-pak",
+    action = "list",
+    default = Sys.getenv("PAK_LIB", "~/R/pak-library"),
+    info = "library location for {pak}"
+  )
   ca$parse()
 })
 
@@ -158,13 +165,19 @@ if (!requireNamespace("pak", quietly = TRUE)) {
   quit()
 }
 
+library(
+  pak, 
+  lib.loc = args$lib_pak,
+  include.only = c("pak", "lockfile_create", "lockfile_install")
+)
+
 if (args$update_scribe) {
-  pak::pak("scribe")
+  pak("scribe")
   quit()
 }
 
 if (args$update_scribe_dev) {
-  pak::pak("github::jmbarbone/scribe")
+  pak("github::jmbarbone/scribe")
   quit()
 }
 
@@ -241,7 +254,7 @@ pak_install <- function(
   on.exit(unlink(lockfile), add = TRUE)
 
   print_eval(
-    pak::lockfile_create,
+    lockfile_create,
     pkg = pkgs,
     lockfile = lockfile,
     lib = lib_create,
@@ -254,7 +267,7 @@ pak_install <- function(
   }
 
   print_eval(
-    pak::lockfile_install,
+    lockfile_install,
     lockfile = lockfile,
     lib = lib_install,
     update = update
