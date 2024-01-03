@@ -152,6 +152,7 @@ if (inherits(args, "try-error")) {
   ca <- commandArgs()
   args$update_scribe <- "--update-scribe" %in% ca
   args$update_scribe_dev <- "--update-scribe-dev" %in% ca
+  args$install_pak <- "--install-pak" %in% ca
   fail <- TRUE
   warning("failed to parse arguments")
 } else {
