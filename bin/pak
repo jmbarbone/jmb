@@ -148,6 +148,7 @@ args <- try(silent = TRUE, {
 })
 
 if (inherits(args, "try-error")) {
+  args <- list()
   ca <- commandArgs()
   args$update_scribe <- "--update-scribe" %in% ca
   args$update_scribe_dev <- "--update-scribe-dev" %in% ca
