@@ -139,7 +139,6 @@ args <- try(silent = TRUE, {
   )
   ca$add_argument(
     "--lockfile",
-    "--lock-file",
     action = "flag",
     default = FALSE,
     info = "Triggers use of lockfile setup, otherwise simplified 'pak::pak()' is employed"
@@ -369,5 +368,5 @@ print_call <- function(g) {
   )
 }
 
-do.call(if (args$lock_file) pak_install else r_pak, args)
+do.call(if (args$lockfile) pak_install else r_pak, args)
 quit()
