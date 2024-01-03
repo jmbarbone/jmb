@@ -209,6 +209,16 @@ if (
 
 if (fail) {
   warning(attr(args, "condition"))
+  cat(
+    "Try one of:",
+    "$ pak --help",
+    "$ pak --update-scribe",
+    "$ pak --update-scribe-dev",
+    "$ pak --install-pak",
+    "",
+    sep = "\n",
+    file = stderr()
+  )
   quit()
 }
 
