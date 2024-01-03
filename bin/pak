@@ -28,6 +28,10 @@ args <- try(silent = TRUE, {
     "pak -d true -u github::tidyverse/dplyr github::tidyverse/tidyr",
     "install dev packages"
   )
+  ca$add_example(
+    "pak --lockfile",,
+    "trigger use of lockfile setups"
+  )
   ca$add_argument(
     "...",
     "pkgs",
@@ -132,6 +136,13 @@ args <- try(silent = TRUE, {
     action = "list",
     default = Sys.getenv("PAK_LIB", "~/R/pak-library"),
     info = "library location for {pak}"
+  )
+  ca$add_argument(
+    "--lockfile",
+    "--lock-file",
+    action = "flag",
+    default = FALSE,
+    info = "Triggers use of lockfile setup, otherwise simplified 'pak::pak()' is employed"
   )
   ca$parse()
 })
@@ -273,6 +284,58 @@ pak_install <- function(
   )
 }
 
+r_pak <- function(
+  pkgs,
+  lib = dot_lib_paths()[1],
+  upgrade = NA,         # check pkgs == "local::."
+  dependencies = NULL,  # check pkgs == "local::."
+  sysreqs = FALSE,
+  repos = "https://cloud.r-project.org",
+  extra_messages = TRUE,
+  ...
+) {
+  op <- options(
+    repos = c(CRAN = repos),
+    pak.no_extra_messages = extra_messages
+  )
+  on.exit(options(op))
+
+  if (sysreqs) {
+    Sys.setenv(PKG_SYSREQS = "true")
+  } else {
+    Sys.setenv(PKG_SYSREQS = "false")
+  }
+
+  # recreate defaults from pak::pak() as we want to be more verbose
+  if (is.null(dependencies)) {
+    if (identical(pkgs, "local::.")) {
+      dependencies <- TRUE
+    } else {
+      dependencies <- NA
+    }
+  }
+
+  if (is.na(upgrade)) {
+    if (identical(pkgs, "local::.")) {
+      upgrade <- TRUE
+    } else {
+      upgrade <- FALSE
+    }
+  }
+
+  lockfile <- normalizePath(tempfile(), "/", FALSE)
+  on.exit(unlink(lockfile), add = TRUE)
+
+  print_eval(
+    pak,
+    pkg = pkgs,
+    lib = lib,
+    dependencies = dependencies,
+    upgrade = upgrade,
+    ask = FALSE
+  )
+}
+
 # TODO consider saving this somewhere
 print_eval <- function(fun, ...) {
   fun <- substitute(fun)
@@ -293,5 +356,5 @@ print_call <- function(g) {
   )
 }
 
-do.call(pak_install, args)
+do.call(if (args$lock_file) pak_install else r_pak, args)
 quit()
