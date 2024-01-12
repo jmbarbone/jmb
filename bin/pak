@@ -368,5 +368,6 @@ print_call <- function(g) {
   )
 }
 
+.libPaths(c(args$lib_pak, args$lib))
 do.call(if (args$lockfile) pak_install else r_pak, args)
 quit()
