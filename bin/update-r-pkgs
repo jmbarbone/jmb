@@ -42,26 +42,6 @@ if (n == 0L) {
   quit()
 }
 
-# pak::pkg_install(paste0("any::", pkgs, "?reinstall"), dependencies = dep)
-
-if (!fuj::is_windows()) {
-  if (osVersion %in% c("Ubuntu 22.10", "Ubuntu 23.04")) {
-    os <- "ubuntu"
-    os_release <- "20.04"
-  } else {
-    os <- NULL
-    os_release <- NULL
-  }
-
-  msg("you may need to install additional system depdencies")
-  msg(pak::pkg_system_requirements(
-    pkgs,
-    os = os,
-    os_release = os_release,
-    sudo = TRUE
-  ))
-}
-
 pak::pak(
   pkg = c(pkgs, args$ignore),
   upgrade = args$upgrade,
