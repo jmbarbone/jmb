@@ -79,7 +79,9 @@ values <-
 values <- values[intersect(seq_along(values), args$n)]
 
 compare(
-  map(data$changelog$histories, "items")[[utils::head(values, 1)]][[1]]$toString,
-  map(data$changelog$histories, "items")[[utils::tail(values, 1)]][[1]]$fromString,
+  x = map(data$changelog$histories, "items")[[utils::head(values, 1)]][[1]]$toString,
+  y = map(data$changelog$histories, "items")[[utils::tail(values, 1)]][[1]]$fromString,
+  x_arg = "old",
+  y_arg = "new",
   max_diffs = Inf
 )
