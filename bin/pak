@@ -14,11 +14,30 @@ dot_lib_paths <- function() {
   res[dir.exists(res)]
 }
 
-# pak for pak
+lib_scribe <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
+lib_scribe <- normalizePath(lib_scribe, "/", FALSE)
 
-library(scribe)
+if (!requireNamespace("scribe", quietly = TRUE, lib.loc = lib_scribe)) {
+  # placeholder.  should try to maintain {scribe} in a separate location
+  lib_scribe <- tryCatch(
+    find.package("scribe"),
+    packageNotFoundError = function(e) {
+      stop(
+        "The 'scribe' package is not installed. ",
+        "Please install with: \n",
+        sprintf(
+          "Rscript -e \"utils::install.packages('scribe', '%s', '%s')\"",
+          lib_scribe,
+          getOption("repos")
+        ),
+        call. = FALSE
+      )
+    }
+  )
+}
 
 args <- try(silent = TRUE, {
+  library(scribe, lib.loc = lib_scribe, include.only = "command_args")
   ca <- command_args()
   ca$add_description("pak : R package installation")
   ca$add_description(
