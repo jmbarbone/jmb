@@ -16,22 +16,21 @@ import argparse
 import pandas as pd
 import numpy as np
 import sys
-import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
 
 def dbfs_log_search(
-        cluster_pattern: chr = ".",
-        file_pattern: chr = ".",
-        type : list = None,
-        cache : bool = True,
-        n : int = 1,
-        force : bool = False,
-        cat : bool = True,
-        host: chr = None,
-        token: chr = None,
-        verbose: bool = True
+    cluster_pattern: chr = ".",
+    file_pattern: chr = ".",
+    type : list = None,
+    cache : bool = True,
+    n : int = 1,
+    force : bool = False,
+    cat : bool = True,
+    host: chr = None,
+    token: chr = None,
+    verbose: bool = True
 ) -> None :
     dbfs_configure(token=token, host=host)
 
@@ -116,10 +115,10 @@ def dbfs_log_search(
 
 
 def get_clusters(
-        cache : bool = True, 
-        force : bool = False,
-        verbose : bool = True
-    ) -> list :
+    cache : bool = True, 
+    force : bool = False,
+    verbose : bool = True
+) -> list :
     path = cache_path("clusters.json")
     
     try :
@@ -156,11 +155,11 @@ def get_clusters(
 
 
 def get_logs_info(
-        cluster: chr,
-        cache : bool = True,
-        force : bool = False,
-        verbose : bool = True
-    ) -> pd.DataFrame :
+    cluster: chr,
+    cache : bool = True,
+    force : bool = False,
+    verbose : bool = True
+) -> pd.DataFrame :
     path = cache_path(cluster + ".pkl")
 
     try :
@@ -281,8 +280,8 @@ def run_stream(*args) :
 
 
 def dbfs_configure(
-        host: chr = None,
-        token: chr = None
+    host: chr = None,
+    token: chr = None
 ) -> None :
     if token is None :
         return None
