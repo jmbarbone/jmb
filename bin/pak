@@ -1,5 +1,6 @@
 #!/usr/bin/env -S Rscript --vanilla
 
+# nolint next: object_name_linter.
 SCRIBE_VERSION <- "0.3.0"
 
 dot_lib_paths <- function() {
@@ -7,7 +8,7 @@ dot_lib_paths <- function() {
   if (!nzchar(user)) {
     return(.libPaths())
   }
-  
+
   args <- c("-i -u", user, "Rscript -e 'writeLines(.libPaths())'")
   res <- system2("sudo", args, stdout = TRUE)
   res[dir.exists(res)]
@@ -29,7 +30,7 @@ args <- try(silent = TRUE, {
     "install dev packages"
   )
   ca$add_example(
-    "pak --lockfile",,
+    "pak --lockfile",
     "trigger use of lockfile setups"
   )
   ca$add_argument(
@@ -141,7 +142,10 @@ args <- try(silent = TRUE, {
     "--lockfile",
     action = "flag",
     default = FALSE,
-    info = "Triggers use of lockfile setup, otherwise simplified 'pak::pak()' is employed"
+    info = c(
+      "Triggers use of lockfile setup,",
+      " otherwise simplified 'pak::pak()' is employed"
+    )
   )
   ca$parse()
 })
@@ -330,6 +334,7 @@ r_pak <- function(
   if (is.na(upgrade)) {
     if (identical(pkgs, "local::.")) {
       upgrade <- TRUE
+      pkgs <- NULL
     } else {
       upgrade <- FALSE
     }
