@@ -14,6 +14,25 @@ dot_lib_paths <- function() {
   res[dir.exists(res)]
 }
 
+print_eval <- function(fun, ...) {
+  fun <- substitute(fun)
+  call <- as.call(do.call(alist, c(fun, list(...))))
+  print_call(call)
+  eval(as.expression(call))
+}
+
+print_call <- function(g) {
+  stopifnot(is.call(g))
+  ls <- as.list(g)
+  ls[] <- lapply(ls, deparse1)
+  cat(
+    ls[[1]], "(\n  ",
+    paste0(names(ls)[-1], " = ", ls[-1], collapse = ",\n  "),
+    "\n)\n",
+    sep = ""
+  )
+}
+
 lib_scribe <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
 lib_scribe <- normalizePath(lib_scribe, "/", FALSE)
 
@@ -154,7 +173,7 @@ args <- try(silent = TRUE, {
   ca$add_argument(
     "--lib-pak",
     action = "list",
-    default = Sys.getenv("PAK_LIB", "~/R/pak-library"),
+    default = Sys.getenv("R_LIBS_PAK", Sys.getenv("PAK_LIB", "~/R/pak-library")),
     info = "library location for {pak}"
   )
   ca$add_argument(
@@ -207,12 +226,22 @@ if (!require(
 }
 
 if (args$update_scribe) {
-  pak("scribe")
+  print_eval(
+    pak,
+    pkg = "scribe",
+    lib = lib_scribe,
+    upgrade = TRUE
+  )
   quit()
 }
 
 if (args$update_scribe_dev) {
-  pak("github::jmbarbone/scribe")
+  print_eval(
+    pak,
+    pkg = "github::jmbarbone/scribe",
+    lib = lib_scribe,
+    upgrade = TRUE
+  )
   quit()
 }
 
@@ -369,26 +398,6 @@ r_pak <- function(
     dependencies = dependencies,
     upgrade = upgrade,
     ask = FALSE
-  )
-}
-
-# TODO consider saving this somewhere
-print_eval <- function(fun, ...) {
-  fun <- substitute(fun)
-  call <- as.call(do.call(alist, c(fun, list(...))))
-  print_call(call)
-  eval(as.expression(call))
-}
-
-print_call <- function(g) {
-  stopifnot(is.call(g))
-  ls <- as.list(g)
-  ls[] <- lapply(ls, deparse1)
-  cat(
-    ls[[1]], "(\n  ",
-    paste0(names(ls)[-1], " = ", ls[-1], collapse = ",\n  "),
-    "\n)\n",
-    sep = ""
   )
 }
 
