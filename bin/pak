@@ -1,5 +1,6 @@
 #!/usr/bin/env -S Rscript --vanilla
 
+# nolint next: object_name_linter.
 SCRIBE_VERSION <- "0.3.0"
 
 dot_lib_paths <- function() {
@@ -7,17 +8,55 @@ dot_lib_paths <- function() {
   if (!nzchar(user)) {
     return(.libPaths())
   }
-  
+
   args <- c("-i -u", user, "Rscript -e 'writeLines(.libPaths())'")
   res <- system2("sudo", args, stdout = TRUE)
   res[dir.exists(res)]
 }
 
-# pak for pak
+print_eval <- function(fun, ...) {
+  fun <- substitute(fun)
+  call <- as.call(do.call(alist, c(fun, list(...))))
+  print_call(call)
+  eval(as.expression(call))
+}
 
-library(scribe)
+print_call <- function(g) {
+  stopifnot(is.call(g))
+  ls <- as.list(g)
+  ls[] <- lapply(ls, deparse1)
+  cat(
+    ls[[1]], "(\n  ",
+    paste0(names(ls)[-1], " = ", ls[-1], collapse = ",\n  "),
+    "\n)\n",
+    sep = ""
+  )
+}
+
+lib_scribe <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
+lib_scribe <- normalizePath(lib_scribe, "/", FALSE)
+
+if (!requireNamespace("scribe", quietly = TRUE, lib.loc = lib_scribe)) {
+  # placeholder.  should try to maintain {scribe} in a separate location
+  lib_scribe <- tryCatch(
+    find.package("scribe"),
+    packageNotFoundError = function(e) {
+      stop(
+        "The 'scribe' package is not installed. ",
+        "Please install with: \n",
+        sprintf(
+          "Rscript -e \"utils::install.packages('scribe', '%s', '%s')\"",
+          lib_scribe,
+          getOption("repos")
+        ),
+        call. = FALSE
+      )
+    }
+  )
+}
 
 args <- try(silent = TRUE, {
+  library(scribe, lib.loc = lib_scribe, include.only = "command_args")
   ca <- command_args()
   ca$add_description("pak : R package installation")
   ca$add_description(
@@ -29,7 +68,7 @@ args <- try(silent = TRUE, {
     "install dev packages"
   )
   ca$add_example(
-    "pak --lockfile",,
+    "pak --lockfile",
     "trigger use of lockfile setups"
   )
   ca$add_argument(
@@ -134,14 +173,17 @@ args <- try(silent = TRUE, {
   ca$add_argument(
     "--lib-pak",
     action = "list",
-    default = Sys.getenv("PAK_LIB", "~/R/pak-library"),
+    default = Sys.getenv("R_LIBS_PAK", Sys.getenv("PAK_LIB", "~/R/pak-library")),
     info = "library location for {pak}"
   )
   ca$add_argument(
     "--lockfile",
     action = "flag",
     default = FALSE,
-    info = "Triggers use of lockfile setup, otherwise simplified 'pak::pak()' is employed"
+    info = c(
+      "Triggers use of lockfile setup,",
+      " otherwise simplified 'pak::pak()' is employed"
+    )
   )
   ca$parse()
 })
@@ -184,12 +226,22 @@ if (!require(
 }
 
 if (args$update_scribe) {
-  pak("scribe")
+  print_eval(
+    pak,
+    pkg = "scribe",
+    lib = lib_scribe,
+    upgrade = TRUE
+  )
   quit()
 }
 
 if (args$update_scribe_dev) {
-  pak("github::jmbarbone/scribe")
+  print_eval(
+    pak,
+    pkg = "github::jmbarbone/scribe",
+    lib = lib_scribe,
+    upgrade = TRUE
+  )
   quit()
 }
 
@@ -330,6 +382,7 @@ r_pak <- function(
   if (is.na(upgrade)) {
     if (identical(pkgs, "local::.")) {
       upgrade <- TRUE
+      pkgs <- NULL
     } else {
       upgrade <- FALSE
     }
@@ -348,25 +401,6 @@ r_pak <- function(
   )
 }
 
-# TODO consider saving this somewhere
-print_eval <- function(fun, ...) {
-  fun <- substitute(fun)
-  call <- as.call(do.call(alist, c(fun, list(...))))
-  print_call(call)
-  eval(as.expression(call))
-}
-
-print_call <- function(g) {
-  stopifnot(is.call(g))
-  ls <- as.list(g)
-  ls[] <- lapply(ls, deparse1)
-  cat(
-    ls[[1]], "(\n  ",
-    paste0(names(ls)[-1], " = ", ls[-1], collapse = ",\n  "),
-    "\n)\n",
-    sep = ""
-  )
-}
-
+.libPaths(c(args$lib_pak, args$lib))
 do.call(if (args$lockfile) pak_install else r_pak, args)
 quit()
