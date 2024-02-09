@@ -34,24 +34,46 @@ print_call <- function(g) {
 }
 
 lib_scribe <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
-lib_scribe <- normalizePath(lib_scribe, "/", FALSE)
+lib_scribe_expected <- lib_scribe <- normalizePath(lib_scribe, "/", FALSE)
 
 if (!requireNamespace("scribe", quietly = TRUE, lib.loc = lib_scribe)) {
   # placeholder.  should try to maintain {scribe} in a separate location
+  scribe_install_txt <- sprintf(
+    paste(
+      "mkdir -p \"%s\" &&",
+      "Rscript --vanilla \\",
+      "  -e \"options(repos = %s)\" \\",
+      "  -e \"utils::install.packages('scribe', '%s')\"",
+      sep = "\n  "
+    ),
+    lib_scribe_expected,
+    if (isTRUE(getOption("repos") == "@CRAN@")) {
+      "c(CRAN = 'https://cloud.r-project.org')"
+    } else {
+      getOption("repos")
+    },
+    lib_scribe_expected
+  )
+
   lib_scribe <- tryCatch(
     find.package("scribe"),
     packageNotFoundError = function(e) {
       stop(
         "The 'scribe' package is not installed. ",
         "Please install with: \n",
-        sprintf(
-          "Rscript -e \"utils::install.packages('scribe', '%s', '%s')\"",
-          lib_scribe,
-          getOption("repos")
-        ),
+        scribe_install_txt,
         call. = FALSE
       )
     }
+  )
+
+  warning(
+    "The 'scribe' package is not installed in an expected location. ",
+    "Please set 'R_LIBS_SCRIBE' or save in default location: ~/R/scribe-library",
+    "\nYou can install with: \n",
+    scribe_install_txt,
+    "\n",
+    call. = FALSE
   )
 }
 
