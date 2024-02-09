@@ -16,7 +16,6 @@ import argparse
 import pandas as pd
 import numpy as np
 import sys
-import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
@@ -24,15 +23,15 @@ import time
 def dbfs_log_search(
         cluster_pattern: chr = ".",
         file_pattern: chr = ".",
-        type : list = None,
-        cache : bool = True,
-        n : int = 1,
-        force : bool = False,
-        cat : bool = True,
+        type: list = None,
+        cache: bool = True,
+        n: int = 1,
+        force: bool = False,
+        cat: bool = True,
         host: chr = None,
         token: chr = None,
         verbose: bool = True
-) -> None :
+) -> None:
     dbfs_configure(token=token, host=host)
 
     # retrieve cluster information
@@ -42,10 +41,10 @@ def dbfs_log_search(
     n_clusters = len(clusters)
 
     all_clusters = "\n".join(all_clusters)
-    if n_clusters == 0 :
+    if n_clusters == 0:
         raise Exception(f"No clusters found with pattern '{cluster_pattern}', expected one of:\n{all_clusters}")
 
-    if n_clusters > 1 :
+    if n_clusters > 1:
         raise Exception(f"Found {n} clusters, expected one of:\n{all_clusters}")
 
     cluster = clusters[0]
@@ -61,12 +60,12 @@ def dbfs_log_search(
     ## filter by file regex
     df = df[df["script"].str.contains(file_pattern)]
 
-    if type is None :
+    if type is None:
         type = ["stdout", "stderr"]
-    elif isinstance(type, str) :
+    elif isinstance(type, str):
         type = [type]
     
-    if n == 0 :
+    if n == 0:
         n = 1
     
     n = n * len(type)
@@ -77,30 +76,30 @@ def dbfs_log_search(
     df = df.drop_duplicates(["datetime", "script", "type"])
     df = df.sort_values("datetime", ascending=False)
     df = df.reset_index(drop=True)
-    if verbose :
+    if verbose:
         print(f"Found {len(df)} files")
 
     # print outputs
-    if len(df) == 0 :
+    if len(df) == 0:
         raise Exception(f"No files found with pattern {file_pattern}")
 
-    if n > len(df) :
-        if verbose :
+    if n > len(df):
+        if verbose:
             print(f"Showing all {len(df)} files")
         n = len(df)
-    else :
-        if verbose :
+    else:
+        if verbose:
             print(f"Showing first {n} files")
         df = df[0:n]
 
-    if verbose or not cat :
+    if verbose or not cat:
         # add extra whitespace to path to make characters the same
         print_df = df.copy()
         print_df["path"] = df["path"].str.ljust(np.max(df["path"].str.len()) + 1)
         print(print_df[["localtime", "path"]].to_string(index=False, justify="left"))
     
-    if cat :
-        for i in range(n) :
+    if cat:
+        for i in range(n):
             # print with header ====
             print("\n" + "".ljust(80, "="))
             # print out information
@@ -116,16 +115,16 @@ def dbfs_log_search(
 
 
 def get_clusters(
-        cache : bool = True, 
-        force : bool = False,
-        verbose : bool = True
-    ) -> list :
+        cache: bool = True, 
+        force: bool = False,
+        verbose: bool = True
+    ) -> list:
     path = cache_path("clusters.json")
     
-    try :
+    try:
         # get mtime as UTC
         mtime = os.path.getmtime(path)
-    except FileNotFoundError :
+    except FileNotFoundError:
         mtime = 0
 
     # get now as UTC
@@ -136,37 +135,37 @@ def get_clusters(
         and not force
         and os.path.exists(path) 
         and (mtime > (now - pd.Timedelta(minutes=10)).timestamp())
-     ) :
+     ):
         ts = pd.Timestamp.fromtimestamp(mtime)
         expiration = 600 - (now.timestamp() - mtime)
         expiration = int(expiration)
 
-        if verbose :
+        if verbose:
             print(f"Found cached  : {path}")
             print(f"Last modified : {ts}")
             print(f"Expires in    : {expiration} seconds")
 
         clusters = pd.read_json(path)["clusters"]
-    else :
+    else:
         clusters = run_output("databricks", "fs", "ls", "dbfs:/cluster-logs")
         # save clusters
-        pd.DataFrame({"clusters" : clusters}).to_json(path)
+        pd.DataFrame({"clusters": clusters}).to_json(path)
     
     return clusters
 
 
 def get_logs_info(
         cluster: chr,
-        cache : bool = True,
-        force : bool = False,
-        verbose : bool = True
-    ) -> pd.DataFrame :
+        cache: bool = True,
+        force: bool = False,
+        verbose: bool = True
+    ) -> pd.DataFrame:
     path = cache_path(cluster + ".pkl")
 
-    try :
+    try:
         # get mtime as UTC
         mtime = os.path.getmtime(path)
-    except FileNotFoundError :
+    except FileNotFoundError:
         mtime = 0
 
     # get now as UTC
@@ -177,12 +176,12 @@ def get_logs_info(
         and not force
         and os.path.exists(path) 
         and (mtime > (now - pd.Timedelta(minutes=10)).timestamp())
-     ) :
+     ):
         ts = pd.Timestamp.fromtimestamp(mtime)
         expiration = 600 - (now.timestamp() - mtime)
         expiration = int(expiration)
 
-        if verbose :
+        if verbose:
             print(f"Found cached  : {path}")
             print(f"Last modified : {ts}")
             print(f"Expires in    : {expiration} seconds")
@@ -191,7 +190,7 @@ def get_logs_info(
         # early exit
         return df
     
-    if verbose :
+    if verbose:
         print(f"Cache not found or too old: {path}") 
         print("Searching for logs...")
     
@@ -200,14 +199,14 @@ def get_logs_info(
     n_dirs = len(dirs)
 
     # perform asynchronously
-    with ThreadPoolExecutor(max_workers=10) as executor :
-        futures = {executor.submit(get_info, dir) : dir for dir in dirs}
-        for future in as_completed(futures) :
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(get_info, dir): dir for dir in dirs}
+        for future in as_completed(futures):
             dir = futures[future]
             info[dir] = future.result()
-            if verbose :
+            if verbose:
                 print(f"Searching {len(info)}/{n_dirs} directories...", end="\r")
-    if verbose :
+    if verbose:
         print("")
 
     df = pd.concat([pd.DataFrame(info[dir]) for dir in info], ignore_index=True)
@@ -216,26 +215,26 @@ def get_logs_info(
     # convert each item into a DataFrame, then bind together
     df = pd.concat([pd.DataFrame(info[dir]) for dir in info], ignore_index=True)
 
-    if cache :
+    if cache:
         # store in cache
         pd.to_pickle(df, path)
 
     return df
 
 
-def cache_path(*args) -> chr :
+def cache_path(*args) -> chr:
     cache_dir = os.path.join(os.path.expanduser("~"), ".dbfs-logs-search")
     os.makedirs(cache_dir, exist_ok=True)
     
     # when *args is none, just return cache_dir
-    if len(args) == 0 :
+    if len(args) == 0:
         return cache_dir
 
     path = os.path.join(cache_dir, *args)
     return path
 
 
-def get_info(dir) -> dict :
+def get_info(dir) -> dict:
     # path: 20230725_190947_00_update_system_packages.sh.stderr.log
     # starts with date time
     # ends with script name
@@ -248,23 +247,23 @@ def get_info(dir) -> dict :
     # extract output put
     types = [file[-10:-4] for file in files]
     res = {
-        "directory" : [dir] * len(files),
-        "datetime" : datetimes,
-        "script" : scripts,
-        "type" : types,
-        "path" : [dir + "/" + file for file in files],
+        "directory": [dir] * len(files),
+        "datetime": datetimes,
+        "script": scripts,
+        "type": types,
+        "path": [dir + "/" + file for file in files],
     }
     return res
 
 
-def run_output(*args) :
+def run_output(*args):
     res = subprocess.run(list(args), check=False, stdout=subprocess.PIPE)
     out = res.stdout.decode("utf-8").rsplit()
     return out
 
 
-def run_stream(*args) :
-    try :
+def run_stream(*args):
+    try:
         subprocess.run(
             list(args),
             check=True,
@@ -273,7 +272,7 @@ def run_stream(*args) :
             text=True,
             encoding="utf-8"
         )
-    except subprocess.CalledProcessError :
+    except subprocess.CalledProcessError:
         print(f"Error running {' '.join(args)}")
         pass
     
@@ -283,20 +282,20 @@ def run_stream(*args) :
 def dbfs_configure(
         host: chr = None,
         token: chr = None
-) -> None :
-    if token is None :
+) -> None:
+    if token is None:
         return None
     
     token = keyring.get_password("databricks", host)
-    if token is None :
+    if token is None:
         raise Exception(f"No token found with host {host}")
 
-    if not host.startswith("https:/") :
+    if not host.startswith("https:/"):
         host = "https://" + host
 
     # https://stackoverflow.com/a/55081210/12126576
     temp = tempfile.NamedTemporaryFile(mode="w+t", delete=False)
-    with temp as f :
+    with temp as f:
         f.writelines(token)
 
     args = ["databricks", "configure", "--host", host, "--token-file", temp.name]
@@ -305,11 +304,11 @@ def dbfs_configure(
     return None
 
 
-def cache_clear() :
+def cache_clear():
     # find total size of cache
     total_size = 0
-    for root, _, files in os.walk(cache_path()) :
-        for file in files :
+    for root, _, files in os.walk(cache_path()):
+        for file in files:
             path = os.path.join(root, file)
             total_size += os.path.getsize(path)
 
@@ -319,10 +318,10 @@ def cache_clear() :
     return None
 
 
-def check_dbfs() :
-    try :
+def check_dbfs():
+    try:
         subprocess.run(["databricks", "--version"], check=True)
-    except FileNotFoundError :
+    except FileNotFoundError:
         raise Exception("databricks cli not found, please install it")
     return None
 
@@ -337,7 +336,7 @@ examples:
 """
 
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Tries to print out the most recent log",
         epilog=EXAMPLE_TEXT,
@@ -433,22 +432,22 @@ if __name__ == "__main__" :
     )
     args = parser.parse_args()
 
-    if args.cache_clear :
+    if args.cache_clear:
         print("Clearing cache...")
         cache_clear()
         exit(0)
 
-    if args.get_clusters :
+    if args.get_clusters:
         clusters = get_clusters(cache=args.cache, force=args.force, verbose=False)
         print("\n".join(clusters))
         exit(0)
     
-    if args.get_cache_path :
+    if args.get_cache_path:
         path = cache_path()
         print(path)
         exit(0)
 
-    if args.get_logs_info or args.get_logs_path :
+    if args.get_logs_info or args.get_logs_path:
         clusters = get_clusters(cache=args.cache, force=args.force, verbose=False)
         # match arg.cluster
         cluster = [cluster for cluster in clusters if re.search(args.cluster_pattern, cluster)][0]
@@ -459,11 +458,11 @@ if __name__ == "__main__" :
         df = df[df["script"].str.contains(args.file_pattern)]
 
         # filter by type
-        if args.type is None :
+        if args.type is None:
             type = ["stdout", "stderr"]
-        elif isinstance(args.type, str) :
+        elif isinstance(args.type, str):
             type = [args.type]
-        else :
+        else:
             type = args.type
 
         assert [t in ["stdout", "stderr"] for t in type]
@@ -471,16 +470,16 @@ if __name__ == "__main__" :
         df = df[df["type"].isin(type)]
         
         # filter by n
-        if args.n > 0 :
+        if args.n > 0:
             df = df[0:args.n]
         
-        if args.get_logs_info :
+        if args.get_logs_info:
             # convert all columns to string
             df = df.applymap(str)
             # left align all columns
             df = df.apply(lambda x: x.str.ljust(x.str.len().max()), axis=0)
             print(df.to_string(justify="left", index=False))
-        elif args.get_logs_path :
+        elif args.get_logs_path:
             paths = df["path"].tolist()
             print("\n".join(paths))
 
