@@ -33,7 +33,7 @@ fi
 
 if [[ "$OSTYPE" == "msys" ]]
 then
-    new=$new/.exe
+    new=$new.exe
     echo "detected windows; making a symbolic link"
     wnew=$(cygpath "$new" --windows)
     wold=$(cygpath "$old" --windows)
