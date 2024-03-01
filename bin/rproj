@@ -83,7 +83,7 @@ found <- found[mark::file_name(tolower(found)) == tolower(params$name)]
 
 n <- length(found)
 
-if (n == 0L) {
+if (n == 0L || isTRUE(is.na(found))) {
   stop("no ", params$name, " found")
 }
 
