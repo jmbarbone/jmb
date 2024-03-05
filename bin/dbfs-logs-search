@@ -9,7 +9,6 @@ Run `dbfs-logs-search --help` for more information
 
 import keyring
 import subprocess
-import tempfile
 import os
 import re
 import argparse
@@ -42,7 +41,8 @@ def dbfs_log_search(
 
     all_clusters = "\n".join(all_clusters)
     if n_clusters == 0:
-        raise Exception(f"No clusters found with pattern '{cluster_pattern}', expected one of:\n{all_clusters}")
+        raise Exception(f"No clusters found with pattern '{cluster_pattern}', "
+                        "expected one of:\n{all_clusters}")
 
     if n_clusters > 1:
         raise Exception(f"Found {n} clusters, expected one of:\n{all_clusters}")
@@ -195,7 +195,10 @@ def get_logs_info(
         print("Searching for logs...")
     
     info = {}
-    dirs = run_output("databricks", "fs", "ls", "--absolute", f"dbfs:/cluster-logs/{cluster}/init_scripts")
+    dirs = run_output(
+        "databricks", "fs", "ls",
+        "--absolute", f"dbfs:/cluster-logs/{cluster}/init_scripts"
+    )
     n_dirs = len(dirs)
 
     # perform asynchronously
@@ -279,7 +282,7 @@ def run_stream(*args):
     return None
 
 
-def _get_config() -> None:
+def read_config() -> None:
     """
     The databricks cli I think is messing up the toml and not using "'" for 
     strings, so I'm going to have to read it manually
@@ -309,7 +312,7 @@ def dbfs_configure(
     host: chr = None,
     token: chr = None
 ) -> None :
-    cfg = _get_config()
+    cfg = read_config()
 
     if host is None:
         if cfg is None:
@@ -318,7 +321,8 @@ def dbfs_configure(
             host = cfg["DEFAULT"]["host"]
 
         if host is None:
-            raise Exception("No host found, please provide a host or set DATABRICKS_HOST environment variable")
+            raise Exception("No host found, please provide a host or set "
+                            "DATABRICKS_HOST environment variable")
 
     if not host.startswith("https:/"):
         host = "https://" + host
@@ -332,7 +336,9 @@ def dbfs_configure(
         if token is None:
             token = keyring.get_password("databricks", host)
             if token is None:
-                raise Exception(f"No token found with host {host}.  Please provide a token or set DATABRICKS_TOKEN environment variable")
+                raise Exception(f"No token found with host {host}.  Please "
+                                "provide a token or set DATABRICKS_TOKEN "
+                                "environment variable")
 
     # https://stackoverflow.com/a/55081210/12126576
 
@@ -363,6 +369,7 @@ def check_dbfs():
     except FileNotFoundError:
         raise Exception("databricks cli not found, please install it")
     return None
+
 
 EXAMPLE_TEXT = """
 examples:
