@@ -418,8 +418,7 @@ r_pak <- function(
     pkg = pkgs,
     lib = lib,
     dependencies = dependencies,
-    upgrade = upgrade,
-    ask = FALSE
+    upgrade = upgrade
   )
 }
 
