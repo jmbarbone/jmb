@@ -1,4 +1,4 @@
-#!/usr/bin/env -S Rscript --vanilla 
+#!/usr/bin/env Rscript
 
 library(scribe)
 ca <- command_args()
@@ -11,11 +11,6 @@ args <- ca$parse()
 args$ignore <- unique(c(args$ignore, "pak", "scribe"))
 
 msg <- function(...) cat("i ", ..., "\n", sep = "")
-
-options(
-  pak.no_extra_messages = TRUE,
-  repos = c(CRAN = "https://cloud.r-project.org")
-)
 
 msg("Checking for old packages")
 pkgs <- row.names(utils::old.packages(lib.loc = .libPaths()[[1]]))

@@ -234,7 +234,7 @@ if (args$install_pak) {
 }
 
 if (!require(
-  pak, 
+  pak,
   lib.loc = args$lib_pak,
   include.only = c("pak", "lockfile_create", "lockfile_install"),
   quietly = TRUE
