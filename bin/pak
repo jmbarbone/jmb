@@ -163,7 +163,7 @@ args <- try(silent = TRUE, {
     )
   )
   ca$add_argument(
-    "--cran-repos",
+    "--repos",
     default = Sys.getenv("CRAN_REPOS", "https://cloud.r-project.org"),
     action = "list",
     info = "Sets the repository"
