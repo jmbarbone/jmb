@@ -1,7 +1,7 @@
-#!/usr/bin/env -S Rscript --vanilla 
+#!/usr/bin/env Rscript
 
-library(scribe)
-ca <- scribe::command_args()
+library(scribe, lib.loc = Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"))
+ca <- command_args()
 ca$add_description("List all files in the PATH environment variable")
 ca$add_argument(
   "pattern",
@@ -42,7 +42,7 @@ path_ls <- function(
   if (crayon::has_color()) {
     m <- regexpr(pattern, res, ignore.case = TRUE, perl = TRUE)
     rs <- regmatches(res, m, invert = invert)
-    regmatches(res, m, invert = invert) <- lapply(rs, crayon::green) 
+    regmatches(res, m, invert = invert) <- lapply(rs, crayon::green)
     res <- res[m > 0]
   } else {
     res <- grep(x = res, pattern = pattern, value = TRUE, invert = invert)
