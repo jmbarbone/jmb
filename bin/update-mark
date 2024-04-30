@@ -1,9 +1,4 @@
-#!/usr/bin/env -S Rscript --vanilla 
-
-options(
-  pak.no_extra_messages = TRUE,
-  repos = "https://cloud.r-project.org"
-)
+#!/usr/bin/env Rscript
 
 library(scribe)
 ca <- command_args()

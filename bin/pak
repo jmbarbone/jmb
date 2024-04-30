@@ -163,7 +163,7 @@ args <- try(silent = TRUE, {
     )
   )
   ca$add_argument(
-    "--cran-repos",
+    "--repos",
     default = Sys.getenv("CRAN_REPOS", "https://cloud.r-project.org"),
     action = "list",
     info = "Sets the repository"
@@ -234,7 +234,7 @@ if (args$install_pak) {
 }
 
 if (!require(
-  pak, 
+  pak,
   lib.loc = args$lib_pak,
   include.only = c("pak", "lockfile_create", "lockfile_install"),
   quietly = TRUE
@@ -418,8 +418,7 @@ r_pak <- function(
     pkg = pkgs,
     lib = lib,
     dependencies = dependencies,
-    upgrade = upgrade,
-    ask = FALSE
+    upgrade = upgrade
   )
 }
 
