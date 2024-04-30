@@ -1,10 +1,11 @@
-#!/usr/bin/env -S Rscript --vanilla 
+#!/usr/bin/env Rscript
 
-library(scribe)
+library(scribe, lib.loc = Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"))
 ca <- command_args()
 ca$add_argument("...", "ignore", default = character())
 ca$add_argument("-u", "--upgrade", action = "flag", default = FALSE)
 ca$add_argument("-d", "--dep", "--dependencies", default = NA)
+ca$add_argument("-v", "--verbose", action = "flag")
 args <- ca$parse()
 
 # FIXME need to implement default for dots
@@ -34,15 +35,24 @@ if (length(args$ignore)) {
 # pkgs <- paste0("any::", pkgs, "?reinstall")
 
 n <- length(pkgs)
-msg("Old packages found: ", n)
+if (args$verbose) {
+  msg("Old packages found: (", n, ")", paste("\n ", pkgs))
+}
 
-if (n == 0L) {
+
+if (n == 0L && args$verbose) {
   msg("No old packages found")
   msg("Exiting")
   quit()
 }
 
-pak::pak(
+library(pak, Sys.getenv("R_LIBS_PAK", lib.loc = "~/R/pak-library"))
+
+if (args$verbose) {
+  msg("Library path(s): ", paste("\n ", .libPaths()))
+}
+
+pak(
   pkg = c(pkgs, args$ignore),
   upgrade = args$upgrade,
   dependencies = args$dependencies,
