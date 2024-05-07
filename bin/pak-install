@@ -1,8 +1,10 @@
-#!/usr/bin/env -S Rscript --vanilla 
+#!/usr/bin/env Rscript
 
 # This script is meant to be called ./configure, so I don't assume {scribe} is available
 
-if (!requireNamespace("scribe", quietly = TRUE)) {
+scribe_lib <- Sys.getenv("SCRIBE_PATH", "~/R/scribe")
+
+if (!requireNamespace("scribe", scribe_lib, quietly = TRUE)) {
   message("w {scribe} not found")
   message("i installing {scribe}")
   utils::install.packages("scribe", repos = c(CRAN = "https://cran.rstudio.com/"))
@@ -11,7 +13,7 @@ if (!requireNamespace("scribe", quietly = TRUE)) {
 
 options(pak.no_extra_messages = TRUE)
 
-library(scribe)
+library(scribe, lib.loc = scribe_lib)
 ca <- command_args()
 ca$add_argument(
   "...",
