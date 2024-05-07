@@ -2,7 +2,11 @@
 
 # This script is meant to be called ./configure, so I don't assume {scribe} is available
 
-scribe_lib <- Sys.getenv("SCRIBE_PATH", "~/R/scribe")
+scribe_lib <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
+
+if (identical(scribe_lib, "")) {
+  scribe_lib <- .libPaths()
+}
 
 if (!requireNamespace("scribe", scribe_lib, quietly = TRUE)) {
   message("w {scribe} not found")

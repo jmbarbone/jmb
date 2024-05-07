@@ -5,9 +5,10 @@
 # folders.  This also only searches for the matching $1.Rproj file -- ignores
 # whatever the folder name may be.
 
-stopifnot(packageVersion("scribe") >= "0.1.0.9002")
+scribe_lib <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
 
-library(scribe)
+stopifnot(packageVersion("scribe", scribe_lib) >= "0.1.0.9002")
+library(scribe, lib.loc = scribe_lib)
 ca <- command_args()
 ca$add_description("Find an .Rproj file and open it in its default application")
 ca$add_description(

@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-library(scribe)
+library(scribe, lib.loc = Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"))
 ca <- command_args()
 ca$add_description(
   "Installs R packages from github::jmbarbone"
