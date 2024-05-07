@@ -2,7 +2,7 @@
 #
 # Find `TODO` notes in your files using `mark::todos()`
 
-library(scribe)
+library(scribe, lib.loc = Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"))
 ca <- command_args()
 ca$add_description("cli wrapper for mark::todos()")
 ca$add_description("See Rscript -e \"?mark::todos\"")
