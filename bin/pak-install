@@ -66,8 +66,25 @@ ca$add_argument(
   default = Sys.getenv("R_LIBS_PAK", "~/R/pak-library"),
   info = "library path to install pak to"
 )
+ca$add_argument(
+  "-f", "--force",
+  action = "flag",
+  info = "Force installation, even if pak is already installed"
+)
 
 args <- ca$parse()
+
+if (requireNamespace("pak", args$lib_path, quietly = TRUE)) {
+  message("i {pak} is already installed")
+  if (args$force) {
+    message("i forcing installation")
+    message("i removing package")
+    try(utils::remove.packages("pak", lib = args$lib_path), silent = TRUE)
+  } else {
+    message("i exiting")
+    quit()
+  }
+}
 
 # if on linux, check for build-essential
 if (startsWith(args$os, "linux")) {
