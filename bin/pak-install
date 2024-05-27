@@ -11,8 +11,11 @@ if (identical(scribe_lib, "")) {
 if (!requireNamespace("scribe", scribe_lib, quietly = TRUE)) {
   message("w {scribe} not found")
   message("i installing {scribe}")
-  utils::install.packages("scribe", repos = c(CRAN = "https://cran.rstudio.com/"))
-  stop("q please run pak-install again")
+  utils::install.packages(
+    "scribe",
+    repos = c(CRAN = "https://cran.rstudio.com/"),
+    lib = scribe_lib
+  )
 }
 
 options(pak.no_extra_messages = TRUE)
