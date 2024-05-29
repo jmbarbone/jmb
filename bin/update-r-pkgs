@@ -11,7 +11,8 @@ options(
       )
     },
     CRAN = "https://packagemanager.posit.co/cran/latest",
-    CRAN = "https://cran.rstudio.com/"
+    CRAN = "https://cran.rstudio.com/",
+    CRAN = "https://cran.r-project.org/"
   )
 )
 
@@ -35,7 +36,9 @@ args$ignore <- unique(c(args$ignore, "pak", "scribe"))
 msg <- function(...) cat("i ", ..., "\n", sep = "")
 
 msg("Checking for old packages")
-libs <- .libPaths()
+libs <- normalizePath(.libPaths(), "/", FALSE)
+# don't install packages in the default library
+libs <- setdiff(libs, normalizePath(.Library, "/", FALSE))
 
 if (args$verbose) {
   msg("Library path(s): ", paste("\n ", libs))
