@@ -10,7 +10,8 @@ options(
         )
       )
     },
-    CRAN = "https://packagemanager.posit.co/cran/latest"
+    CRAN = "https://packagemanager.posit.co/cran/latest",
+    CRAN = "https://cran.rstudio.com/"
   )
 )
 
@@ -20,6 +21,12 @@ ca$add_argument("...", "ignore", default = character())
 ca$add_argument("-u", "--upgrade", action = "flag", default = FALSE)
 ca$add_argument("-d", "--dep", "--dependencies", default = NA)
 ca$add_argument("-v", "--verbose", action = "flag")
+ca$add_argument(
+  "--dry",
+  action = "flag",
+  default = FALSE,
+  info = "Dry run, do not install packages"
+)
 args <- ca$parse()
 
 # FIXME need to implement default for dots
@@ -28,26 +35,44 @@ args$ignore <- unique(c(args$ignore, "pak", "scribe"))
 msg <- function(...) cat("i ", ..., "\n", sep = "")
 
 msg("Checking for old packages")
-pkgs <- row.names(utils::old.packages(lib.loc = .libPaths()[[1]]))
-# pkgs <- setdiff(pkgs, "MASS") # current issue with MASS
+libs <- .libPaths()
 
-if ("pak" %in% pkgs) {
-  msg("You may want to call pak-install")
+if (args$verbose) {
+  msg("Library path(s): ", paste("\n ", libs))
 }
 
-pkgs <- setdiff(pkgs, args$ignore)
+pkgs <- lapply(libs, function(lib) {
+  setdiff(row.names(utils::old.packages(lib.loc = lib)), args$ignore)
+})
 
 if (length(args$ignore)) {
   args$ignore <- paste0(args$ignore, "=?ignore")
 }
 
-# pkgs <- paste0("any::", pkgs, "?reinstall")
+ok <- lengths(pkgs) > 0
+libs <- libs[ok]
+pkgs <- pkgs[ok]
 
-n <- length(pkgs)
+print(str(pkgs))
+
+n <- sum(lengths(pkgs))
 if (args$verbose) {
-  msg("Old packages found: (", n, ")", paste("\n ", pkgs))
+  msg(
+    "Old packages found: (", n, ")",
+    vapply(
+      seq_along(libs),
+      function(i) {
+        paste0(
+          "\n  ",
+          libs[i], " (", length(pkgs[[i]]), ")",
+          paste0("\n    ", pkgs[[i]], collapse = ""),
+          collapse = ""
+        )
+      },
+      NA_character_
+    )
+  )
 }
-
 
 if (n == 0L && args$verbose) {
   msg("No old packages found")
@@ -57,13 +82,21 @@ if (n == 0L && args$verbose) {
 
 library(pak, Sys.getenv("R_LIBS_PAK", lib.loc = "~/R/pak-library"))
 
-if (args$verbose) {
-  msg("Library path(s): ", paste("\n ", .libPaths()))
+if (args$dry) {
+  msg("Dry run, exiting")
+  quit()
 }
 
-pak(
-  pkg = c(pkgs, args$ignore),
-  upgrade = args$upgrade,
-  dependencies = args$dependencies,
-  ask = FALSE
-)
+for (i in seq_along(libs)) {
+  if (length(pkgs[[i]]) == 0L) {
+    next
+  }
+
+  try(pkg_install(
+    pkg = c(pkgs[[i]], args$ignore),
+    lib = libs[i],
+    upgrade = args$upgrade,
+    dependencies = args$dependencies,
+    ask = FALSE
+  ))
+}
