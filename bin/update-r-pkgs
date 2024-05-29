@@ -53,8 +53,6 @@ ok <- lengths(pkgs) > 0
 libs <- libs[ok]
 pkgs <- pkgs[ok]
 
-print(str(pkgs))
-
 n <- sum(lengths(pkgs))
 if (args$verbose) {
   msg(
