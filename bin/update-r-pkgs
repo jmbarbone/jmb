@@ -1,5 +1,19 @@
 #!/usr/bin/env Rscript
 
+options(
+  repos = c(
+    if (.Platform$OS.type == "unix") {
+      c(
+        CRAN = sprintf(
+          "https://packagemanager.posit.co/cran/__linux__/%s/latest",
+          system2("lsb_release", "-cs", stdout = TRUE)
+        )
+      )
+    },
+    CRAN = "https://packagemanager.posit.co/cran/latest"
+  )
+)
+
 library(scribe, lib.loc = Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"))
 ca <- command_args()
 ca$add_argument("...", "ignore", default = character())
