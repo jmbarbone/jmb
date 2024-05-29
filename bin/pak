@@ -33,6 +33,45 @@ print_call <- function(g) {
   )
 }
 
+execute_repos <- function(arg, ...) {
+  message("execute_repos")
+  arg$value <- do_execute_repos(arg$get_value())
+  invisible()
+}
+
+do_execute_repos <- function(value) {
+  if (!is.null(value)) {
+    return(c(CRAN = value))
+  }
+
+  if (isTRUE(value == "cran")) {
+    return(c(CRAN = "https://cloud.r-project.org"))
+  }
+
+  env <- Sys.getenv("CRAN_REPOS")
+
+  if (nzchar(env)) {
+    return(c(CRAN = env))
+  }
+
+  repos <- c(
+    CRAN = "https://packagemanager.posit.co/cran/latest",
+    CRAN = "https://cloud.r-project.org"
+  )
+
+  if (.Platform$OS.type == "unix") {
+    repos <- c(
+      CRAN = sprintf(
+        "https://packagemanager.posit.co/cran/__linux__/%s/latest",
+        system2("lsb_release", "-cs", stdout = TRUE)
+      ),
+      repos
+    )
+  }
+
+  repos
+}
+
 lib_scribe <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
 lib_scribe_expected <- lib_scribe <- normalizePath(lib_scribe, "/", FALSE)
 
@@ -164,9 +203,10 @@ args <- try(silent = TRUE, {
   )
   ca$add_argument(
     "--repos",
-    default = Sys.getenv("CRAN_REPOS", "https://cloud.r-project.org"),
+    default = NULL,
     action = "list",
-    info = "Sets the repository"
+    info = "Sets the repository",
+    execute = execute_repos
   )
   ca$add_argument(
     "--extra-messages",
