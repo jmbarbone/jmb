@@ -62,6 +62,7 @@ ca$add_argument(
 )
 ca$add_argument(
   "--lib-path",
+  action = "list",
   default = Sys.getenv("R_LIBS_PAK", "~/R/pak-library"),
   info = "library path to install pak to"
 )
@@ -72,6 +73,7 @@ ca$add_argument(
 )
 
 args <- ca$parse()
+dir.create(args$lib_path, recursive = TRUE, showWarnings = FALSE)
 
 if (requireNamespace("pak", args$lib_path, quietly = TRUE)) {
   message("i {pak} is already installed")
