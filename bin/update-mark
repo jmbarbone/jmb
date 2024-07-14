@@ -27,24 +27,6 @@ pak_pak <- function(...) {
 
 pkgs <- c("mark", "markExtra", "Rprofile", "fuj", "scribe")
 
-if (!fuj::is_windows()) {
-  distro <- distro::distro()
-
-  if (distro$id == "ubuntu" && distro$version %in% c("22.10", "23.04")) {
-    os <- distro$id
-    os_release <- "20.04"
-  } else {
-    os <- NULL
-    os_release <- NULL
-  }
-
-  try(pak::pkg_system_requirements(
-    pkgs,
-    os = os,
-    os_release = os_release,
-    execute = TRUE
-  ))
-}
 
 # main packages -- these should all play nicely with each other
 pak_pak(pkgs)
