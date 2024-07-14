@@ -48,8 +48,9 @@ pak::pak(
 # branches of {mark}
 
 if (args$dev) {
-  cat("i Installing facts, twenty\n")
-  pak_pak("facts", "twenty")
+  devs <- c("facts", "twenty", "outcomes")
+  message("i Installing ", toString(devs))
+  pak_pak(devs)
 }
 
 cat("i Done\n")
