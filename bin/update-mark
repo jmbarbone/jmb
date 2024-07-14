@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(scribe, lib.loc = Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"))
+
 ca <- command_args()
 ca$add_description(
   "Installs R packages from github::jmbarbone"
@@ -15,21 +16,33 @@ ca$add_argument(
   action = "flag",
   info = "Install dev packages, too?"
 )
+ca$add_argument(
+  "-b", "--branch",
+  action = "list",
+  default = "*release",
+  info = "Branch to install from"
+)
 
 args <- ca$parse()
 
 pak_pak <- function(...) {
   pkgs <- unlist(list(...))
-  cat("i Installing", toString(pkgs), "\n")
+  message("i Installing ", toString(pkgs))
   pkgs <- paste0("github::jmbarbone/", pkgs, if (args$force) "?reinstall")
   pak::pak(pkgs, dependencies = TRUE)
 }
 
-pkgs <- c("mark", "markExtra", "Rprofile", "fuj", "scribe")
-
+pkgs <- paste0(c("mark", "markExtra", "fuj"), "@", args$branch)
+pkgs <- c(pkgs, "Rprofile") # Rprofile doesn't use releases, yet
 
 # main packages -- these should all play nicely with each other
 pak_pak(pkgs)
+
+pak::pak(
+  paste0("scribe@", args$branch),
+  lib = Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"),
+  dependencies = TRUE
+)
 
 # these packages are a little special right now because they require specific
 # branches of {mark}
