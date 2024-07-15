@@ -107,7 +107,8 @@ if (!requireNamespace("scribe", quietly = TRUE, lib.loc = lib_scribe)) {
 
   warning(
     "The 'scribe' package is not installed in an expected location. ",
-    "Please set 'R_LIBS_SCRIBE' or save in default location: ~/R/scribe-library",
+    "Please set 'R_LIBS_SCRIBE' or save in default location:",
+    " ~/R/scribe-library",
     "\nYou can install with: \n",
     scribe_install_txt,
     "\n",
@@ -144,7 +145,7 @@ args <- try(silent = TRUE, {
     default = NULL,
     info = c(
       "dependencies (coerced).",
-      " Defaults to TRUE when pkgs is 'local::.', otherwise NA"
+      " Defaults to TRUE when pkgs is 'local::.' or --dev is set, otherwise NA"
     )
   )
   ca$add_argument(
@@ -154,7 +155,7 @@ args <- try(silent = TRUE, {
     default = NA,
     info = c(
       "use most recent version of packages, TRUE when pkgs is 'local::.'",
-      " otherwise FALSE"
+      " or --dev is set, otherwise FALSE"
     )
   )
   ca$add_argument(
@@ -168,6 +169,11 @@ args <- try(silent = TRUE, {
     action = "flag",
     default = FALSE,
     info = "Tries to install system requirements"
+  )
+  ca$add_argument(
+    "--dev",
+    action = "flag",
+    info = "install only local package dependencies"
   )
   ca$add_argument(
     "-e",
@@ -234,7 +240,10 @@ args <- try(silent = TRUE, {
   ca$add_argument(
     "--lib-pak",
     action = "list",
-    default = Sys.getenv("R_LIBS_PAK", Sys.getenv("PAK_LIB", "~/R/pak-library")),
+    default = Sys.getenv(
+      "R_LIBS_PAK",
+      Sys.getenv("PAK_LIB", "~/R/pak-library")
+    ),
     info = "library location for {pak}"
   )
   ca$add_argument(
@@ -275,7 +284,12 @@ if (args$install_pak) {
 if (!require(
   pak,
   lib.loc = args$lib_pak,
-  include.only = c("pak", "lockfile_create", "lockfile_install"),
+  include.only = c(
+    "pkg_install",
+    "local_install_dev_deps",
+    "lockfile_create",
+    "lockfile_install"
+  ),
   quietly = TRUE
 )) {
   warning(
@@ -335,19 +349,22 @@ if (fail) {
   quit()
 }
 
-pak_install <- function(
-  pkgs,
-  lib = dot_lib_paths()[1],
-  upgrade = NA,         # check pkgs == "local::."
-  dependencies = NULL,  # check pkgs == "local::."
-  update = TRUE,
-  sysreqs = FALSE,
-  echo = FALSE,
-  lib_create = lib,
-  lib_install = lib,
-  repos = "https://cloud.r-project.org",
-  extra_messages = TRUE,
-  ...
+# wrapper for:
+#> pak::lockfile_create()
+#> pak::lockfile_install()
+pak_lockfile <- function(
+    pkgs,
+    lib = dot_lib_paths()[1],
+    upgrade = NA,         # check pkgs == "local::."
+    dependencies = NULL,  # check pkgs == "local::."
+    update = TRUE,
+    sysreqs = FALSE,
+    echo = FALSE,
+    lib_create = lib,
+    lib_install = lib,
+    repos = "https://cloud.r-project.org",
+    extra_messages = TRUE,
+    ...
 ) {
   op <- options(
     repos = c(CRAN = repos),
@@ -369,8 +386,10 @@ pak_install <- function(
     Sys.setenv(PKG_SYSREQS = "false")
   }
 
+  is_local <- isTRUE(grepl("local::.", pkgs, fixed = TRUE))
+
   if (is.null(dependencies)) {
-    if (identical(pkgs, "local::.")) {
+    if (is_local) {
       dependencies <- TRUE
     } else {
       dependencies <- NA
@@ -378,7 +397,7 @@ pak_install <- function(
   }
 
   if (is.na(upgrade)) {
-    if (identical(pkgs, "local::.")) {
+    if (is_local) {
       upgrade <- TRUE
     } else {
       upgrade <- FALSE
@@ -409,15 +428,17 @@ pak_install <- function(
   )
 }
 
-r_pak <- function(
-  pkgs,
-  lib = dot_lib_paths()[1],
-  upgrade = NA,         # check pkgs == "local::."
-  dependencies = NULL,  # check pkgs == "local::."
-  sysreqs = FALSE,
-  repos = "https://cloud.r-project.org",
-  extra_messages = TRUE,
-  ...
+# wrapper for
+#> pak::pkg_install()
+pak_install <- function(
+    pkgs,
+    lib = dot_lib_paths()[1],
+    upgrade = NA,         # check pkgs == "local::."
+    dependencies = NULL,  # check pkgs == "local::."
+    sysreqs = FALSE,
+    repos = "https://cloud.r-project.org",
+    extra_messages = TRUE,
+    ...
 ) {
   op <- options(
     repos = c(CRAN = repos),
@@ -431,9 +452,11 @@ r_pak <- function(
     Sys.setenv(PKG_SYSREQS = "false")
   }
 
+  is_local <- isTRUE(grepl("local::.", pkgs, fixed = TRUE))
+
   # recreate defaults from pak::pak() as we want to be more verbose
   if (is.null(dependencies)) {
-    if (identical(pkgs, "local::.")) {
+    if (is_local) {
       dependencies <- TRUE
     } else {
       dependencies <- NA
@@ -441,9 +464,8 @@ r_pak <- function(
   }
 
   if (is.na(upgrade)) {
-    if (identical(pkgs, "local::.")) {
+    if (is_local) {
       upgrade <- TRUE
-      pkgs <- NULL
     } else {
       upgrade <- FALSE
     }
@@ -453,7 +475,7 @@ r_pak <- function(
   on.exit(unlink(lockfile), add = TRUE)
 
   print_eval(
-    pak,
+    pkg_install,
     pkg = pkgs,
     lib = lib,
     dependencies = dependencies,
@@ -461,6 +483,47 @@ r_pak <- function(
   )
 }
 
+# wrapper for
+#> pak::local_install_dev_deps()
+pak_dev <- function(
+    lib = dot_lib_paths()[1],
+    sysreqs = FALSE,
+    extra_messages = TRUE,
+    upgrade = TRUE,
+    dependencies = TRUE,
+    ...
+) {
+  op <- options(pak.no_extra_messages = extra_messages)
+  on.exit(options(op))
+
+  if (sysreqs) {
+    Sys.setenv(PKG_SYSREQS = "true")
+  } else {
+    Sys.setenv(PKG_SYSREQS = "false")
+  }
+
+  upgrade <- !isFALSE(upgrade)
+  dependencies <- !isFALSE(dependencies)
+
+  print_eval(
+    local_install_dev_deps,
+    root = ".",
+    lib = lib,
+    upgrade = upgrade,
+    dependencies = TRUE
+  )
+}
+
 .libPaths(c(args$lib_pak, args$lib))
-do.call(if (args$lockfile) pak_install else r_pak, args)
+do.call(
+  if (args$lockfile) {
+    pak_lockfile
+  } else if (args$dev) {
+    pak_dev
+  } else {
+    pak_install
+  },
+  args
+)
+
 quit()
