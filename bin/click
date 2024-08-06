@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# click once every 20 seconds
+# for 200 instances
+xdotool click --delay 20000 --repeat 200 1
