@@ -2,11 +2,10 @@
 
 # This script is meant to be called ./configure, so I don't assume {scribe} is available
 
-scribe_lib <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
 
-if (identical(scribe_lib, "")) {
-  scribe_lib <- .libPaths()
-}
+
+scribe_lib <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
+dir.create(scribe_lib, recursive = TRUE, showWarnings = FALSE)
 
 if (!requireNamespace("scribe", scribe_lib, quietly = TRUE)) {
   message("w {scribe} not found")
@@ -63,6 +62,7 @@ ca$add_argument(
 )
 ca$add_argument(
   "--lib-path",
+  action = "list",
   default = Sys.getenv("R_LIBS_PAK", "~/R/pak-library"),
   info = "library path to install pak to"
 )
@@ -73,6 +73,7 @@ ca$add_argument(
 )
 
 args <- ca$parse()
+dir.create(args$lib_path, recursive = TRUE, showWarnings = FALSE)
 
 if (requireNamespace("pak", args$lib_path, quietly = TRUE)) {
   message("i {pak} is already installed")

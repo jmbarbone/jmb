@@ -34,7 +34,6 @@ print_call <- function(g) {
 }
 
 execute_repos <- function(arg, ...) {
-  message("execute_repos")
   arg$value <- do_execute_repos(arg$get_value())
   invisible()
 }
