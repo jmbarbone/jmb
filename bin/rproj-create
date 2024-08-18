@@ -10,7 +10,7 @@ field <- function(x) {
   yaml::read_yaml(x)
 }
 
-library(scribe)
+library(scribe, Sys.getenv("R_LIBS_SCRIBE", .libPaths()))
 ca <- command_args()
 ca$add_description("A wrapper for usethis::create_package()")
 ca$add_argument("path", info = "Name of the new project")
