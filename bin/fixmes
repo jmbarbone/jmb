@@ -1,8 +1,8 @@
-#!/usr/bin/env -S Rscript --vanilla 
+#!/usr/bin/env -S Rscript
 #
 # Find `FIXMES` notes in your files using `mark::fixmes()`
 
-library(scribe)
+library(scribe, Sys.getenv("R_LIBS_SCRIBE", .lib=Paths()))
 ca <- command_args()
 ca$add_description("cli wrapper for mark::fixmes()")
 ca$add_description("See Rscript -e \"?mark::fixmes\"")
