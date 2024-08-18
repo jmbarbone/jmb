@@ -1,4 +1,4 @@
-#!/usr/bin/env -S Rscript --vanilla 
+#!/usr/bin/env -S Rscript
 
 if (!requireNamespace("Rprofile", quietly = TRUE)) {
   stop(
@@ -8,7 +8,7 @@ if (!requireNamespace("Rprofile", quietly = TRUE)) {
   )
 }
 
-library(scribe)
+library(scribe, Sys.getenv("R_LIBS_SCRIBE", .libPaths()))
 ca <- command_args()
 ca$add_argument("-p", "--path",      default = ".")
 ca$add_argument("-m", "--method",    default = "github")
