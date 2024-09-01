@@ -59,7 +59,7 @@ def main(ticket: str = None, domain: str = None) -> None :
         branch = pygit2.Repository('.').head.shorthand
 
         try :
-            ticket = re.findall("(^[A-Z]+-?[0-9]+)-.+", branch)[0]
+            ticket = re.findall("(^[A-Z]+-?[0-9]+)(-.+)?", branch)[0][0]
         except IndexError :
             print("Could not find a ticket in the current branch: " + branch)
             return None
