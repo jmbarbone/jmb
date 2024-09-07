@@ -1,4 +1,4 @@
-#!/usr/bin/env -S Rscript --vanilla 
+#!/usr/bin/env -S Rscript --vanilla
 
 main <- function(path = ".", verbose = FALSE) {
   # define function so we don't have to keep checking verbose
@@ -64,7 +64,7 @@ f_sort <- function(x) {
   sort(unique(x))
 }
 
-library(scribe)
+library(scribe, Sys.getenv("R_LIBS_SCRIBE", .libPaths()))
 ca <- command_args()
 ca$add_description("Tries to clean up line endings")
 ca$add_argument("-p", "--path", default = ".")
