@@ -13,6 +13,25 @@
 
 # branches=$(git branch --all | grep -v "origin/HEAD")
 
+if [[ $* == *--help* || $# -eq 0 ]]
+then
+    echo "git-co"
+    echo ""
+    echo "checkout a branch based on a pattern match"
+    echo ""
+    echo "USAGE"
+    echo "  git-co --help"
+    echo "  git co pattern"
+    echo ""
+    echo "ARGUMENTS"
+    echo "  pattern : pattern to search"
+    echo "  --help  : prints this and returns"
+    echo ""
+    echo "EXAMPLES"
+    echo "  $ git co dev"
+    exit 0
+fi
+
 # list all branches, but only their names
 branches=$(git branch --all | sed 's/.*\///g' | sed 's/.* //g' | sed '')
 # unique branches only
