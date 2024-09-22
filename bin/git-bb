@@ -2,6 +2,13 @@
 
 # https://gist.github.com/schacon/e9e743dee2e92db9a464619b99e94eff
 
+if [[ $* == *--help* ]]
+then
+    echo "See https://gist.github.com/schacon/e9e743dee2e92db9a464619b99e94eff"
+    exit 0
+fi
+
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
