@@ -46,49 +46,45 @@ function do_exit() {
   exit $1
 }
 
-# if -h,--help is passed anywhere
-for arg in "$@"
-do
-  case $arg in
-    -h|--help)
-      echo "git-bitbucket-to-github"
-      echo ""
-      echo "USAGE"
-      echo "  git-bitbucket-to-github <path> <org> [flags]"
-      echo ""
-      echo "POSITIONAL ARGUMENTS"
-      echo "  repo   : the path to the repository to migrate (default=.)"
-      echo "  github : the organization and repository name to migrate to"
-      echo ""
-      echo "FLAGS"
-      echo "  -h, --help   : show this help message"
-      echo "  -c, --create : create the repository on github"
-      echo ""
-      echo  "EXAMPLES"
-      echo "  # show help"
-      echo "  git-bitbucket-to-github --help"
-      echo ""
-      echo "  # migrate from current path to a repo that exists"
-      echo "  git-bitbucket-to-github . org/repo"
-      echo ""
-      echo "  # migrate from a set path to a repo that doesn't exist yet"
-      echo "  git-bitbucket-to-github ~/code/my-repo my-org/new-repo --create"
-      echo ""
-      echo "EXIT CODES"
-      echo "  0 : no error (also from '--help')"
-      echo "  1 : bad flag"
-      echo "  2 : user cancelled"
-      echo "  3 : jq not found"
-      echo "  4 : could not get user/org"
-      echo "  5 : local bitbucket repo path not found"
-      echo "  6 : failed to push to github"
-      echo "  7 : github repo does not exist"
-      echo "  8 : gh not found"
-      echo "  9 : could not get remote name or url from bitbucket"
-      exit 0
-      ;;
-  esac
-done
+if [[ $* == *--help* || $# -eq 0 ]]
+then
+  echo "git-bitbucket-to-github"
+  echo ""
+  echo "USAGE"
+  ehoc "  git-bitbucket-to-github --help"
+  echo "  git bitbucket-to-github <path> <org> [flags]"
+  echo ""
+  echo "POSITIONAL ARGUMENTS"
+  echo "  repo   : the path to the repository to migrate (default=.)"
+  echo "  github : the organization and repository name to migrate to"
+  echo ""
+  echo "FLAGS"
+  echo "  --help       : show this help message"
+  echo "  -c, --create : create the repository on github"
+  echo ""
+  echo  "EXAMPLES"
+  echo "  # show help"
+  echo "  git bitbucket-to-github --help"
+  echo ""
+  echo "  # migrate from current path to a repo that exists"
+  echo "  git bitbucket-to-github . org/repo"
+  echo ""
+  echo "  # migrate from a set path to a repo that doesn't exist yet"
+  echo "  git bitbucket-to-github ~/code/my-repo my-org/new-repo --create"
+  echo ""
+  echo "EXIT CODES"
+  echo "  0 : no error (also from '--help')"
+  echo "  1 : bad flag"
+  echo "  2 : user cancelled"
+  echo "  3 : jq not found"
+  echo "  4 : could not get user/org"
+  echo "  5 : local bitbucket repo path not found"
+  echo "  6 : failed to push to github"
+  echo "  7 : github repo does not exist"
+  echo "  8 : gh not found"
+  echo "  9 : could not get remote name or url from bitbucket"
+  exit 0
+fi
 
 # default settings
 tmpdir=$(mktemp -d)
