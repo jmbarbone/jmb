@@ -1,11 +1,10 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 # https://linuxize.com/post/how-to-rename-local-and-remote-git-branch/
 # Because I can never be bothered to remember this
 #
 # git-rename main master
-
-if [[ $* == *--help* ]]
+if [[ $* == *--help* || $# -eq 0 ]]
 then
     echo "git-rename"
     echo ""
@@ -29,10 +28,10 @@ fi
 
 new=$1
 old=${2:-$(git rev-parse --abbrev-ref HEAD)}
+
 git checkout $old
 git branch -m $new
 git push origin -u $new
-
 
 if [[ $* == *--gh-default* ]]
 then
