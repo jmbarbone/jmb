@@ -1,0 +1,5 @@
+keyring
+ipykernel
+pygit2
+numpy<2.0
+pandas
