@@ -192,6 +192,8 @@ elif grep -q "Ubuntu 20" /etc/issue ; then
     install_ubuntu "bionic-amd64" "${VERSION}"
 elif grep -q "Ubuntu 22" /etc/issue ; then
     install_ubuntu "jammy-amd64" "${VERSION}"
+elif grep -q "Ubuntu 24" /etc/issue ; then
+    install_ubuntu "noble-amd64" "${VERSION}"
 else
     echo "This script only works on OSX/macOS and Ubuntu Linux."
     exit 1
