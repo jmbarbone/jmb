@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+more=$((0))
+for arg in "${@}"
+do
+  case $arg in
+    --more)
+      (( more+=1 ))
+      shift 
+      ;;
+  esac
+done
+
+git fetch --all --prune
+
+case $more in
+  0)
+    git branch --merged \
+      | grep -Ev "(^\*|master|main|dev)" \
+      | xargs git branch -d
+    ;;
+  1)
+    echo "more"
+    git branch -r --merged \
+      | grep -Ev "(^\*|master|main|dev|release)" \
+      | xargs git branch -r -d
+    ;;
+  2)
+    echo "more"
+    echo "more"
+    git branch -r --merged \
+      | grep -Ev "(^\*|master|main|dev|release)" \
+      | cut -d/ -f2- xargs git push origin --delete
+    ;;
+esac
+
+exit 0
