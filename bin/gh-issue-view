@@ -7,27 +7,29 @@ import argparse
 import os
 
 
-def main(path: chr = ".", web: bool = False) -> None :
+def main(path: chr = ".", web: bool = False) -> None:
     os.chdir(path)
     # Get the current branch:
-    branch = git.Repository('.').head.shorthand
+    branch = git.Repository(".").head.shorthand
     # get the issue number from the branch name:
-    
-    try :
+
+    try:
         issue = re.findall("(^[0-9]+)-.+", branch)[0]
-    except IndexError :
-            raise ValueError("Could not find a ticket in the current branch: " + branch)
+    except IndexError:
+        raise ValueError("Could not find a ticket in the current branch: " + branch)
     # open the issue in the default browser:
     commands = ["gh", "issue", "view", issue]
     if web:
         commands.append("--web")
-    
+
     subprocess.run(commands)
     return None
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Open a GitHub issue in the default browser.")
+    parser = argparse.ArgumentParser(
+        description="Open a GitHub issue in the default browser."
+    )
     parser.add_argument("path", nargs="?", default=".")
     parser.add_argument("-w", "--web", action="store_true")
     args = parser.parse_args()
