@@ -6,7 +6,6 @@ A utility function for quickly looking up log files using Databrick's databricks
 Run `dbfs-logs-search --help` for more information
 """
 
-
 import keyring
 import subprocess
 import os
@@ -22,33 +21,37 @@ import time
 def dbfs_log_search(
     cluster_pattern: chr = ".",
     file_pattern: chr = ".",
-    type : list = None,
-    cache : bool = True,
-    n : int = 1,
-    force : bool = False,
-    cat : bool = True,
+    type: list = None,
+    cache: bool = True,
+    n: int = 1,
+    force: bool = False,
+    cat: bool = True,
     host: chr = None,
     token: chr = None,
-    verbose: bool = True
-) -> None :
+    verbose: bool = True,
+) -> None:
     dbfs_configure(token=token, host=host)
 
     # retrieve cluster information
-    all_clusters = get_clusters(cache=cache, force=force, verbose=verbose)        
-    
-    clusters = [cluster for cluster in all_clusters if re.search(cluster_pattern, cluster)]
+    all_clusters = get_clusters(cache=cache, force=force, verbose=verbose)
+
+    clusters = [
+        cluster for cluster in all_clusters if re.search(cluster_pattern, cluster)
+    ]
     n_clusters = len(clusters)
 
     all_clusters = "\n".join(all_clusters)
     if n_clusters == 0:
-        raise Exception(f"No clusters found with pattern '{cluster_pattern}', "
-                        "expected one of:\n{all_clusters}")
+        raise Exception(
+            f"No clusters found with pattern '{cluster_pattern}', "
+            "expected one of:\n{all_clusters}"
+        )
 
     if n_clusters > 1:
         raise Exception(f"Found {n} clusters, expected one of:\n{all_clusters}")
 
     cluster = clusters[0]
-    
+
     # retrieve logs information
     df = get_logs_info(cluster=cluster, cache=cache, force=force, verbose=verbose)
 
@@ -56,7 +59,7 @@ def dbfs_log_search(
     offset = time.altzone
     ## convert to local time
     df["localtime"] = df["datetime"] - pd.Timedelta(seconds=offset)
-    
+
     ## filter by file regex
     df = df[df["script"].str.contains(file_pattern)]
 
@@ -64,10 +67,10 @@ def dbfs_log_search(
         type = ["stdout", "stderr"]
     elif isinstance(type, str):
         type = [type]
-    
+
     if n == 0:
         n = 1
-    
+
     n = n * len(type)
     assert [t in ["stdout", "stderr"] for t in type]
     df = df[df["type"].isin(type)]
@@ -97,7 +100,7 @@ def dbfs_log_search(
         print_df = df.copy()
         print_df["path"] = df["path"].str.ljust(np.max(df["path"].str.len()) + 1)
         print(print_df[["localtime", "path"]].to_string(index=False, justify="left"))
-    
+
     if cat:
         for i in range(n):
             # print with header ====
@@ -114,13 +117,9 @@ def dbfs_log_search(
     return None
 
 
-def get_clusters(
-    cache : bool = True, 
-    force : bool = False,
-    verbose : bool = True
-) -> list :
+def get_clusters(cache: bool = True, force: bool = False, verbose: bool = True) -> list:
     path = cache_path("clusters.json")
-    
+
     try:
         # get mtime as UTC
         mtime = os.path.getmtime(path)
@@ -130,12 +129,12 @@ def get_clusters(
     # get now as UTC
     now = pd.Timestamp.utcnow()
 
-    if ( 
-        cache 
+    if (
+        cache
         and not force
-        and os.path.exists(path) 
+        and os.path.exists(path)
         and (mtime > (now - pd.Timedelta(minutes=10)).timestamp())
-     ):
+    ):
         ts = pd.Timestamp.fromtimestamp(mtime)
         expiration = 600 - (now.timestamp() - mtime)
         expiration = int(expiration)
@@ -150,16 +149,16 @@ def get_clusters(
         clusters = run_output("databricks", "fs", "ls", "dbfs:/cluster-logs")
         # save clusters
         pd.DataFrame({"clusters": clusters}).to_json(path)
-    
+
     return clusters
 
 
 def get_logs_info(
     cluster: chr,
-    cache : bool = True,
-    force : bool = False,
-    verbose : bool = True
-) -> pd.DataFrame :
+    cache: bool = True,
+    force: bool = False,
+    verbose: bool = True,
+) -> pd.DataFrame:
     path = cache_path(cluster + ".pkl")
 
     try:
@@ -171,12 +170,12 @@ def get_logs_info(
     # get now as UTC
     now = pd.Timestamp.utcnow()
 
-    if ( 
-        cache 
+    if (
+        cache
         and not force
-        and os.path.exists(path) 
+        and os.path.exists(path)
         and (mtime > (now - pd.Timedelta(minutes=10)).timestamp())
-     ):
+    ):
         ts = pd.Timestamp.fromtimestamp(mtime)
         expiration = 600 - (now.timestamp() - mtime)
         expiration = int(expiration)
@@ -189,15 +188,18 @@ def get_logs_info(
         df = pd.read_pickle(path)
         # early exit
         return df
-    
+
     if verbose:
-        print(f"Cache not found or too old: {path}") 
+        print(f"Cache not found or too old: {path}")
         print("Searching for logs...")
-    
+
     info = {}
     dirs = run_output(
-        "databricks", "fs", "ls",
-        "--absolute", f"dbfs:/cluster-logs/{cluster}/init_scripts"
+        "databricks",
+        "fs",
+        "ls",
+        "--absolute",
+        f"dbfs:/cluster-logs/{cluster}/init_scripts",
     )
     n_dirs = len(dirs)
 
@@ -228,7 +230,7 @@ def get_logs_info(
 def cache_path(*args) -> chr:
     cache_dir = os.path.join(os.path.expanduser("~"), ".dbfs-logs-search")
     os.makedirs(cache_dir, exist_ok=True)
-    
+
     # when *args is none, just return cache_dir
     if len(args) == 0:
         return cache_dir
@@ -244,7 +246,9 @@ def get_info(dir) -> dict:
     files = run_output("databricks", "fs", "ls", dir)
     # extract datetime from beginning of path, first 15 characters
     datetimes = [file[0:15] for file in files]
-    datetimes = [pd.to_datetime(datetime, format="%Y%m%d_%H%M%S") for datetime in datetimes]
+    datetimes = [
+        pd.to_datetime(datetime, format="%Y%m%d_%H%M%S") for datetime in datetimes
+    ]
     # extract script from end of path: after 18th character, with last 14 characters removed
     scripts = [file[19:-14] for file in files]
     # extract output put
@@ -273,28 +277,28 @@ def run_stream(*args):
             stdout=sys.stderr,
             stderr=sys.stderr,
             text=True,
-            encoding="utf-8"
+            encoding="utf-8",
         )
     except subprocess.CalledProcessError:
         print(f"Error running {' '.join(args)}")
         pass
-    
+
     return None
 
 
 def read_config() -> None:
     """
-    The databricks cli I think is messing up the toml and not using "'" for 
+    The databricks cli I think is messing up the toml and not using "'" for
     strings, so I'm going to have to read it manually
     """
     path = os.path.expanduser("~/.databrickscfg")
-    
+
     if not path:
         return None
 
     with open(path, "r") as f:
         lines = f.readlines()
-    
+
     # find "host = " and "token = "
     host = None
     token = None
@@ -304,14 +308,11 @@ def read_config() -> None:
             host = line.split("=")[1].strip()
         elif line.startswith("token"):
             token = line.split("=")[1].strip()
-    
+
     return {"DEFAULT": {"host": host, "token": token}}
 
 
-def dbfs_configure(
-    host: chr = None,
-    token: chr = None
-) -> None :
+def dbfs_configure(host: chr = None, token: chr = None) -> None:
     cfg = read_config()
 
     if host is None:
@@ -321,31 +322,35 @@ def dbfs_configure(
             host = cfg["DEFAULT"]["host"]
 
         if host is None:
-            raise Exception("No host found, please provide a host or set "
-                            "DATABRICKS_HOST environment variable")
+            raise Exception(
+                "No host found, please provide a host or set "
+                "DATABRICKS_HOST environment variable"
+            )
 
     if not host.startswith("https:/"):
         host = "https://" + host
-    
-    if token is None :
+
+    if token is None:
         if cfg is None:
             token = os.getenv("DATABRICKS_TOKEN", None)
         else:
             token = cfg["DEFAULT"]["token"]
-    
+
         if token is None:
             token = keyring.get_password("databricks", host)
             if token is None:
-                raise Exception(f"No token found with host {host}.  Please "
-                                "provide a token or set DATABRICKS_TOKEN "
-                                "environment variable")
+                raise Exception(
+                    f"No token found with host {host}.  Please "
+                    "provide a token or set DATABRICKS_TOKEN "
+                    "environment variable"
+                )
 
     # https://stackoverflow.com/a/55081210/12126576
 
     # write to file
     with open("/tmp/databrickscfg", "w") as f:
         f.write(f"[DEFAULT]\nhost = {host}\ntoken = {token}\n")
-    
+
     return None
 
 
@@ -386,95 +391,90 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Tries to print out the most recent log",
         epilog=EXAMPLE_TEXT,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "cluster_pattern",
         help="A pattern to match for the log directory",
         nargs="?",
-        default="."
+        default=".",
     )
     parser.add_argument(
         "file_pattern",
         help="A pattern to match for the log file",
         nargs="?",
-        default="."
+        default=".",
     )
     parser.add_argument(
         "type",
         help="The type of log file to search for",
         nargs="?",
-        choices=["stdout", "stderr"]
+        choices=["stdout", "stderr"],
     )
     parser.add_argument(
         "-n",
         help="Number of files to print; for --get-logs-info, number of rows to print",
         type=int,
-        default=0
+        default=0,
     )
     parser.add_argument(
         "--cache",
         help="Use cached data",
         action=argparse.BooleanOptionalAction,
-        default=True
+        default=True,
     )
     parser.add_argument(
-        "--force", "-f",
+        "--force",
+        "-f",
         help="Force cache refresh",
         action=argparse.BooleanOptionalAction,
-        default=False
+        default=False,
     )
     parser.add_argument(
-        "-c", "--cat",
+        "-c",
+        "--cat",
         help="Controls printing for files",
         action=argparse.BooleanOptionalAction,
-        default=True
+        default=True,
     )
+    parser.add_argument("--host", help="Host name (optional)", required=False)
+    parser.add_argument("--token", help="Include a token (optional)", required=False)
     parser.add_argument(
-        "--host",
-        help="Host name (optional)",
-        required=False
-    )
-    parser.add_argument(
-        "--token",
-        help="Include a token (optional)",
-        required=False
-    )
-    parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         help="Verbose output (ignored with immediate exits, which are not verbose)",
         action=argparse.BooleanOptionalAction,
-        default=True
+        default=True,
     )
     parser.add_argument(
         "--cache-clear",
         help="Clear the cache and exit",
         action=argparse.BooleanOptionalAction,
-        default=False
+        default=False,
     )
     parser.add_argument(
         "--get-clusters",
         help="Get clusters and exit",
         action=argparse.BooleanOptionalAction,
-        default=False
+        default=False,
     )
     parser.add_argument(
         "--get-cache-path",
         help="Get cache path and exit",
         action=argparse.BooleanOptionalAction,
-        default=False
+        default=False,
     )
     parser.add_argument(
         "--get-logs-info",
         help="Get logs info and exit",
         action=argparse.BooleanOptionalAction,
-        default=False
+        default=False,
     )
     parser.add_argument(
         "--get-logs-path",
         help="Get logs paths and exit",
         action=argparse.BooleanOptionalAction,
-        default=False
+        default=False,
     )
     args = parser.parse_args()
 
@@ -487,7 +487,7 @@ if __name__ == "__main__":
         clusters = get_clusters(cache=args.cache, force=args.force, verbose=False)
         print("\n".join(clusters))
         exit(0)
-    
+
     if args.get_cache_path:
         path = cache_path()
         print(path)
@@ -496,8 +496,12 @@ if __name__ == "__main__":
     if args.get_logs_info or args.get_logs_path:
         clusters = get_clusters(cache=args.cache, force=args.force, verbose=False)
         # match arg.cluster
-        cluster = [cluster for cluster in clusters if re.search(args.cluster_pattern, cluster)][0]
-        df = get_logs_info(cluster=cluster, cache=args.cache, force=args.force, verbose=False)
+        cluster = [
+            cluster for cluster in clusters if re.search(args.cluster_pattern, cluster)
+        ][0]
+        df = get_logs_info(
+            cluster=cluster, cache=args.cache, force=args.force, verbose=False
+        )
         # arrange by time and path
         df = df.sort_values(["datetime", "path"], ascending=False)
         # filter by file regex
@@ -514,11 +518,11 @@ if __name__ == "__main__":
         assert [t in ["stdout", "stderr"] for t in type]
         # filter on type
         df = df[df["type"].isin(type)]
-        
+
         # filter by n
         if args.n > 0:
-            df = df[0:args.n]
-        
+            df = df[0 : args.n]
+
         if args.get_logs_info:
             # convert all columns to string
             df = df.applymap(str)
@@ -541,5 +545,5 @@ if __name__ == "__main__":
         cat=args.cat,
         host=args.host,
         token=args.token,
-        verbose=args.verbose
+        verbose=args.verbose,
     )
