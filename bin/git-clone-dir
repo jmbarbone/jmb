@@ -26,12 +26,12 @@ import os
 
 
 def git_clone_dir(
-    old_repo : chr,
-    new_repo : chr,
-    subfolder : chr,
-    branch : chr = "main",
-    create : bool = False
-) -> None :
+    old_repo: chr,
+    new_repo: chr,
+    subfolder: chr,
+    branch: chr = "main",
+    create: bool = False,
+) -> None:
     """
     Clone a directory from one repository to another.
 
@@ -86,21 +86,18 @@ def git_clone_dir(
     ```
     """
 
-    if not "/" in old_repo :
+    if not "/" in old_repo:
         raise ValueError("old_repo must be {username}/{repo}")
 
-    if not "/" in new_repo :
+    if not "/" in new_repo:
         raise ValueError("new_repo must be {username}/{repo}")
 
-    if create :
+    if create:
         path = subprocess.getoutput(["where", "gh"])
-        if not os.path.exists(path) :
+        if not os.path.exists(path):
             raise Exception("gh not found in PATH")
 
-        subprocess.run(
-            ["gh", "repo", "create", new_repo, "--private"],
-            check=True
-        )
+        subprocess.run(["gh", "repo", "create", new_repo, "--private"], check=True)
 
     print("Switching to temporary directory")
     tmpdir = tempfile.mkdtemp()
@@ -111,16 +108,20 @@ def git_clone_dir(
     # The `--no-local` flag is needed so that git-filter-repo doesn't complain
     # about a fresh clone.
     subprocess.run(
-        ["git", "clone",
-        "-b", branch,
-        "--single-branch",
-        "--no-local",
-         f"https://github.com/{old_repo}"],
-        check=True
+        [
+            "git",
+            "clone",
+            "-b",
+            branch,
+            "--single-branch",
+            "--no-local",
+            f"https://github.com/{old_repo}",
+        ],
+        check=True,
     )
 
     # make sure the subfolder ends with a slash
-    if not subfolder.endswith("/") :
+    if not subfolder.endswith("/"):
         subfolder += "/"
 
     print("Changing wd to the cloned repository")
@@ -134,7 +135,7 @@ def git_clone_dir(
     print("adding origin")
     subprocess.run(
         ["git", "remote", "add", "origin", f"https://github.com/{new_repo}.git"],
-        check=True
+        check=True,
     )
 
     print("Pushing to new GitHub repository")
@@ -149,27 +150,19 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "old_repo",
-        help="The old repository to clone from (must be {username}/{repo})"
+        help="The old repository to clone from (must be {username}/{repo})",
     )
     parser.add_argument(
         "new_repo",
-        help="The new repository to clone to (must be {username}/{repo})"
+        help="The new repository to clone to (must be {username}/{repo})",
     )
-    parser.add_argument(
-        "subfolder",
-        help="The subfolder to clone"
-    )
-    parser.add_argument(
-        "branch",
-        nargs="?",
-        help="The branch to clone",
-        default="main"
-    )
+    parser.add_argument("subfolder", help="The subfolder to clone")
+    parser.add_argument("branch", nargs="?", help="The branch to clone", default="main")
     parser.add_argument(
         "-c",
         "--create",
         action="store_true",
-        help="Create the new repository if it doesn't exist"
+        help="Create the new repository if it doesn't exist",
     )
 
     args = parser.parse_args()
@@ -178,5 +171,5 @@ if __name__ == "__main__":
         new_repo=args.new_repo,
         subfolder=args.subfolder,
         branch=args.branch,
-        create=args.create
+        create=args.create,
     )
