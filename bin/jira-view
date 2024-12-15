@@ -7,60 +7,60 @@ import re
 import os
 
 
-def main(ticket: str = None, domain: str = None) -> None :
+def main(ticket: str = None, domain: str = None) -> None:
     """Open a Jira ticket in the default browser."""
 
-    while domain is None and os.path.exists("./.atlassian") :
-        with open("./.atlassian", "r") as f :
+    while domain is None and os.path.exists("./.atlassian"):
+        with open("./.atlassian", "r") as f:
             domain = f.read().rstrip()
 
-        try :
+        try:
             domain = re.findall("jira: (.+)", domain)[0]
-        except IndexError :
+        except IndexError:
             domain = None
             pass
 
-    while domain is None and os.path.exists("./.jira") :
+    while domain is None and os.path.exists("./.jira"):
         # can specify a domain in a .jira file; dcf format preferred
-        with open("./.jira", "r") as f :
+        with open("./.jira", "r") as f:
             domain = f.read().rstrip()
-        
-        try :
+
+        try:
             domain = re.findall("domain: (.+)", domain)[0]
-        except IndexError :
+        except IndexError:
             domain = None
             pass
 
-    if domain is None and os.path.exists("./DESCRIPTION") :
+    if domain is None and os.path.exists("./DESCRIPTION"):
         # useful for R related projects
-        with open("./DESCRIPTION", "r") as f :
+        with open("./DESCRIPTION", "r") as f:
             desc = f.read().rstrip()
 
-        try :
+        try:
             domain = re.findall("Config/jira: (.+)", desc)[0]
-        except IndexError :
+        except IndexError:
             domain = None
             pass
 
-    if domain is None :
+    if domain is None:
         domain = os.getenv("JIRA_DOMAIN", None)
 
-    if domain is None :
+    if domain is None:
         raise ValueError(
-            "Domain not found." + 
-            " This can be passed in the call, saved in DESCRIPTION or .jira" +
-            " or stored as a default in env JIRA_DOMAIN."
+            "Domain not found."
+            + " This can be passed in the call, saved in DESCRIPTION or .jira"
+            + " or stored as a default in env JIRA_DOMAIN."
         )
 
-    if not domain.startswith("http") :
+    if not domain.startswith("http"):
         domain = f"https://{domain}"
 
-    if ticket is None :
-        branch = pygit2.Repository('.').head.shorthand
+    if ticket is None:
+        branch = pygit2.Repository(".").head.shorthand
 
-        try :
+        try:
             ticket = re.findall("(^[A-Z]+-?[0-9]+)(-.+)?", branch)[0][0]
-        except IndexError :
+        except IndexError:
             print("Could not find a ticket in the current branch: " + branch)
             return None
 
@@ -71,7 +71,9 @@ def main(ticket: str = None, domain: str = None) -> None :
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Open a Jira ticket in the default browser.")
+    parser = argparse.ArgumentParser(
+        description="Open a Jira ticket in the default browser."
+    )
     parser.add_argument("ticket", nargs="?", default=None)
     parser.add_argument("domain", nargs="?", default=None)
     args = parser.parse_args()
