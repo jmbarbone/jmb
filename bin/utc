@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 # format time as YYYY-MM-DD HH:MM:SS
-echo $(TZ=TUC date +%F\ %T)
+echo $(TZ=UTC date +%F\ %T)
