@@ -7,68 +7,87 @@ For each changed file, commit with a message of the form:
 - "Remove <filename>"
 """
 
-
 import argparse
 import subprocess
 import os
 
 
 def main(
-        path: str = ".", 
-        verbose: bool = True,
-        execute: bool = True
-) -> None :
+    path: str = ".",
+    verbose: bool = True,
+    execute: bool = True,
+) -> None:
     os.chdir(path)
-    statuses = subprocess.run(["git", "status", "--porcelain"], stdout=subprocess.PIPE, cwd=path)
+    statuses = subprocess.run(
+        ["git", "status", "--porcelain"],
+        stdout=subprocess.PIPE,
+        cwd=path,
+    )
     statuses = statuses.stdout.decode().split("\n")
     statuses = [line.strip() for line in statuses if line.strip() != ""]
     # split statuses into a list of tuples
     statuses = [tuple(line.split(" ", maxsplit=1)) for line in statuses]
 
-    if len(statuses) == 0 :
-        if verbose :
+    if len(statuses) == 0:
+        if verbose:
             print("i nothing to commit")
         return None
 
-    for status in statuses :
+    for status in statuses:
         path = status[1]
         # strip when wrapped in quotes
-        if path[0] == "\"" and path[-1] == "\"" :
+        if path[0] == '"' and path[-1] == '"':
             path = path[1:-1]
-        
-        match status[0] :
-            case "M" :
+
+        match status[0]:
+            case "M":
                 message = f"Update {path}"
-            case "??" :
+            case "??":
                 message = f"Add {path}"
-            case "D" :
+            case "D":
                 message = f"Remove {path}"
-            case _ :
+            case _:
                 raise ValueError(f"x unknown status line: {status}")
 
-        if verbose :
+        if verbose:
             print(f"i committing {path} with message '{message}'")
-        
-        if execute :
+
+        if execute:
             subprocess.run(["git", "add", path])
             subprocess.run(["git", "commit", "-m", message])
-    
-    if verbose :
+
+    if verbose:
         print("i remember to push changes to remote")
 
     return None
 
 
-if __name__ == "__main__" :
-    parser = argparse.ArgumentParser(description="Commit each changed file")
-    parser.add_argument('-p', '--path', default='.', help="Path to the repository")
-    parser.add_argument('-q', '--quiet', action='store_true', help="Suppress output")
-    parser.add_argument('-n', '--dry-run', action='store_true', help="Don't actually commit")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Commit each changed file",
+    )
+    parser.add_argument(
+        "-p",
+        "--path",
+        default=".",
+        help="Path to the repository",
+    )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress output",
+    )
+    parser.add_argument(
+        "-n",
+        "--dry-run",
+        action="store_true",
+        help="Don't actually commit",
+    )
     args = parser.parse_args()
 
     main(
         path=args.path,
         verbose=not args.quiet,
-        execute=not args.dry_run
+        execute=not args.dry_run,
     )
- 
