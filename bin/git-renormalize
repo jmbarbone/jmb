@@ -45,7 +45,11 @@ if __name__ == "__main__":
         description="Renormalize all files in a git repository."
     )
     parser.add_argument(
-        "path", type=str, nargs="?", default=".", help="Path to the git repository."
+        "path",
+        type=str,
+        nargs="?",
+        default=".",
+        help="Path to the git repository.",
     )
     parser.add_argument(
         "-s",
