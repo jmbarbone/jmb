@@ -33,14 +33,21 @@ def dbfs_log_search(
     dbfs_configure(token=token, host=host)
 
     # retrieve cluster information
-    all_clusters = get_clusters(cache=cache, force=force, verbose=verbose)
+    all_clusters = get_clusters(
+        cache=cache,
+        force=force,
+        verbose=verbose,
+    )
 
     clusters = [
-        cluster for cluster in all_clusters if re.search(cluster_pattern, cluster)
+        cluster for cluster 
+        in all_clusters 
+        if re.search(cluster_pattern, cluster)
     ]
-    n_clusters = len(clusters)
 
+    n_clusters = len(clusters)
     all_clusters = "\n".join(all_clusters)
+    
     if n_clusters == 0:
         raise Exception(
             f"No clusters found with pattern '{cluster_pattern}', "
@@ -53,7 +60,12 @@ def dbfs_log_search(
     cluster = clusters[0]
 
     # retrieve logs information
-    df = get_logs_info(cluster=cluster, cache=cache, force=force, verbose=verbose)
+    df = get_logs_info(
+        cluster=cluster,
+        cache=cache,
+        force=force,
+        verbose=verbose,
+    )
 
     ## get time offset
     offset = time.altzone
@@ -99,7 +111,9 @@ def dbfs_log_search(
         # add extra whitespace to path to make characters the same
         print_df = df.copy()
         print_df["path"] = df["path"].str.ljust(np.max(df["path"].str.len()) + 1)
-        print(print_df[["localtime", "path"]].to_string(index=False, justify="left"))
+        print(
+            print_df[["localtime", "path"]].to_string(index=False, justify="left")
+        )
 
     if cat:
         for i in range(n):
@@ -117,7 +131,11 @@ def dbfs_log_search(
     return None
 
 
-def get_clusters(cache: bool = True, force: bool = False, verbose: bool = True) -> list:
+def get_clusters(
+    cache: bool = True,
+    force: bool = False,
+    verbose: bool = True,
+) -> list:
     path = cache_path("clusters.json")
 
     try:
@@ -201,6 +219,7 @@ def get_logs_info(
         "--absolute",
         f"dbfs:/cluster-logs/{cluster}/init_scripts",
     )
+
     n_dirs = len(dirs)
 
     # perform asynchronously
@@ -247,9 +266,11 @@ def get_info(dir) -> dict:
     # extract datetime from beginning of path, first 15 characters
     datetimes = [file[0:15] for file in files]
     datetimes = [
-        pd.to_datetime(datetime, format="%Y%m%d_%H%M%S") for datetime in datetimes
+        pd.to_datetime(datetime, format="%Y%m%d_%H%M%S") 
+        for datetime in datetimes
     ]
-    # extract script from end of path: after 18th character, with last 14 characters removed
+    # extract script from end of path: after 18th character, with last 14 
+    # characters removed
     scripts = [file[19:-14] for file in files]
     # extract output put
     types = [file[-10:-4] for file in files]
@@ -437,8 +458,16 @@ if __name__ == "__main__":
         action=argparse.BooleanOptionalAction,
         default=True,
     )
-    parser.add_argument("--host", help="Host name (optional)", required=False)
-    parser.add_argument("--token", help="Include a token (optional)", required=False)
+    parser.add_argument(
+        "--host",
+        help="Host name (optional)",
+        required=False,
+    )
+    parser.add_argument(
+        "--token",
+        help="Include a token (optional)",
+        required=False,
+    )
     parser.add_argument(
         "--verbose",
         "-v",
@@ -484,7 +513,11 @@ if __name__ == "__main__":
         exit(0)
 
     if args.get_clusters:
-        clusters = get_clusters(cache=args.cache, force=args.force, verbose=False)
+        clusters = get_clusters(
+            cache=args.cache,
+            force=args.force,
+            verbose=False,
+        )
         print("\n".join(clusters))
         exit(0)
 
@@ -494,13 +527,21 @@ if __name__ == "__main__":
         exit(0)
 
     if args.get_logs_info or args.get_logs_path:
-        clusters = get_clusters(cache=args.cache, force=args.force, verbose=False)
+        clusters = get_clusters(
+            cache=args.cache,
+            force=args.force,
+            verbose=False,
+        )
         # match arg.cluster
         cluster = [
-            cluster for cluster in clusters if re.search(args.cluster_pattern, cluster)
+            cluster for cluster in clusters
+            if re.search(args.cluster_pattern, cluster)
         ][0]
         df = get_logs_info(
-            cluster=cluster, cache=args.cache, force=args.force, verbose=False
+            cluster=cluster,
+            cache=args.cache,
+            force=args.force,
+            verbose=False,
         )
         # arrange by time and path
         df = df.sort_values(["datetime", "path"], ascending=False)
