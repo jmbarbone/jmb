@@ -18,38 +18,37 @@ ca$add_description(
 )
 ca$add_example("rproj mark")
 ca$add_example("rproj scribe --verbose")
-ca$add_example("rproj .")
+ca$add_example("rproj local::mark")
+ca$add_argument(
+  "name",
+  default = "local::.",
+  info = "The name of the the file.  Use 'local::.' to search a directory"
+)
 ca$add_argument(
   "-v",
   "--verbose",
   action = "flag",
-  default = FALSE,
+  default = TRUE,
   info = "When set, prints out additional messages"
 )
 ca$add_argument(
-  "-c",
-  "--code",
-  action = "flag",
-  default = FALSE,
-  info = "When set, calls the folder containing the .Rproj file with `code`"
+  "-m",
+  "--method",
+  action = "list",
+  default = "Rproj",
+  options = list(choices = c("Rproj", "code", "positron")),
+  info = "Method for opening the project"
 )
 ca$add_argument(
-  "name",
-  default = ".",
-  info = "The name of the the file.  Use '.' to search the current directory"
+  "-r",
+  "--recurse",
+  action = "list",
+  default = 2L,
+  info = "Level of recursiveness to set for folder finds"
 )
 params <- ca$parse()
 
-if (!length(params$name)) {
-  stop("No Rproj provided")
-}
-
-msg <- if (params$verbose) {
-  # 24 is currently the longest message...
-  function(x, ...)  message("i ", format(x, width = 24), ...)
-} else {
-  function(...) invisible()
-}
+msg <- if (params$verbose) message else function(...) invisible()
 
 fs_dir_ls <- function(..., recurse = FALSE) {
   x <- lapply(recurse, function(x) fs::dir_ls(..., recurse = x))
@@ -57,69 +56,66 @@ fs_dir_ls <- function(..., recurse = FALSE) {
   fs::path(unique(unlist(x)))
 }
 
-if (identical(params$name, ".")) {
-  # why this? because it enforces that the file must be in the usually
-  # directory, and because I don't want to resolve symbolic links.  With the
-  # multiple recurse calls we can more correctly sort files
-  params$name <- fs_dir_ls(glob = "*.Rproj", type = "file", recurse = FALSE)
-  params$name <- mark::file_name(mark::remove_na(params$name))
-}
+do_open <- function(path) {
+  n <- length(path)
+  if (n == 0) {
+    msg("e No paths found")
+    str(params)
+    stop()
+  }
+  if (n > 1) {
+    found <- sort(path)
+    msg("w Found ", n, " possible matches, using first")
+    cat(paste0("  ", path), sep = "\n")
+    path <- path[1L]
+  }
 
-# TODO better check for missing parameters
-homedir <- Sys.getenv("GH_HOME", Sys.getenv("R_USER", Sys.getenv("HOME")))
-homedir <- fs::path_norm(homedir)
-
-if (!fs::dir_exists(homedir)) {
-  stop("Home directory does not exist: ", homedir)
-}
-
-msg("Using home directory: ", homedir)
-setwd(homedir)
-
-reg <- sprintf(".*%s(\\.Rproj)?$", params$name)
-msg("Searching with regex:   ", reg)
-
-found <- fs_dir_ls(regexp = reg, recurse = 0:3, type = c("file", "directory"))
-found <- found[mark::file_name(tolower(found)) == tolower(params$name)]
-
-n <- length(found)
-
-if (n == 0L || isTRUE(is.na(found))) {
-  stop("no ", params$name, " found")
-}
-
-dirs <- fs::is_dir(found)
-found <- c(
-  found[!dirs],
-  unlist(lapply(found[dirs], fs::dir_ls, glob = "*.Rproj", type = "directory"))
-)
-
-if (length(found) > 1L) {
-  msg(
-    "Found multiple matches: ", toString(found),
-    "Only using first"
+  msg("i Opening ", path)
+  switch(
+    params$method,
+    Rproj = xopen::xopen(path),
+    system2(Sys.which(params$method), path)
   )
 }
 
-found <- found[1L]
-
-if (fs::is_dir(found)) {
-  found <- fs::dir_ls(found, glob = "*.Rproj", type = "file")[1L]
+if (identical(params$name, ".")) {
+  params$name <- "local::."
 }
 
-found <- fs::path_abs(found)
-
-if (isTRUE(params$code)) {
-  found <- dirname(found)
-  fun <- function(x) {
-    # code didn't seem to work that well with xopen()
-    code <- Sys.which("code")
-    cat("Running", code, found, "\n")
-    invisible(system2(code, found, stdout = TRUE))
+if (startsWith(params$name, "local::")) {
+  path <- substr(params$name, 8L, nchar(params$name))
+  path <- normalizePath(path, "/", TRUE)
+  if (params$method == "Rproj") {
+    path <- fs_dir_ls(path, glob = "*.Rproj", type = "file")
   }
+  do_open(path)
 } else {
-  fun <- function(x) xopen::xopen(x)
-}
+  homedir <- Sys.getenv("GH_HOME", Sys.getenv("R_USER", Sys.getenv("HOME")))
+  homedir <- fs::path_norm(homedir)
 
-msg("Trying to open: ", found)
-fun(found)
+  if (!fs::dir_exists(homedir)) {
+    stop("Home directory does not exist: ", homedir)
+  }
+
+  msg("i Using home directory: ", homedir)
+
+  path <- switch(
+    params$method,
+    Rproj = {
+      fs_dir_ls(
+        homedir,
+        glob = paste0("*", params$name, ".Rproj"), 
+        type = "file", 
+        recurse = params$recurse
+      )
+    },
+    fs_dir_ls(
+      homedir,
+      glob = paste0("*", params$name),
+      type = "dir",
+      recurse = TRUE
+    )
+  )
+  
+  do_open(path)
+}
