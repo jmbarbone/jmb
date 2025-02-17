@@ -43,7 +43,7 @@ ca$add_argument(
   "-r",
   "--recurse",
   action = "list",
-  default = 2L,
+  default = 3L,
   info = "Level of recursiveness to set for folder finds"
 )
 params <- ca$parse()
