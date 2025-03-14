@@ -10,8 +10,8 @@ if (!requireNamespace("Rprofile", quietly = TRUE)) {
 
 library(scribe, Sys.getenv("R_LIBS_SCRIBE", .libPaths()))
 ca <- command_args()
-ca$add_argument("-p", "--path",      default = ".")
-ca$add_argument("-m", "--method",    default = "github")
+ca$add_argument("-p", "--path", default = ".")
+ca$add_argument("-m", "--method", default = "github")
 ca$add_argument("-o", "--overwrite", action = "flag")
 params <- ca$parse()
 
