@@ -26,7 +26,8 @@ print_call <- function(g) {
   ls <- as.list(g)
   ls[] <- lapply(ls, deparse1)
   cat(
-    ls[[1]], "(\n  ",
+    ls[[1]],
+    "(\n  ",
     paste0(names(ls)[-1], " = ", ls[-1], collapse = ",\n  "),
     "\n)\n",
     sep = ""
@@ -281,17 +282,19 @@ if (args$install_pak) {
   quit()
 }
 
-if (!require(
-  pak,
-  lib.loc = args$lib_pak,
-  include.only = c(
-    "pkg_install",
-    "local_install_dev_deps",
-    "lockfile_create",
-    "lockfile_install"
-  ),
-  quietly = TRUE
-)) {
+if (
+  !require(
+    pak,
+    lib.loc = args$lib_pak,
+    include.only = c(
+      "pkg_install",
+      "local_install_dev_deps",
+      "lockfile_create",
+      "lockfile_install"
+    ),
+    quietly = TRUE
+  )
+) {
   warning(
     "pak is not installed, try:\n",
     "$ pak --install-pak",
@@ -323,7 +326,7 @@ if (args$update_scribe_dev) {
 scribe_version <- try(packageVersion("scribe"), silent = TRUE)
 if (
   inherits(scribe_version, "try-error") ||
-  scribe_version < SCRIBE_VERSION
+    scribe_version < SCRIBE_VERSION
 ) {
   warning(
     "some features may not work properly, try:\n",
@@ -353,18 +356,18 @@ if (fail) {
 #> pak::lockfile_create()
 #> pak::lockfile_install()
 pak_lockfile <- function(
-    pkgs,
-    lib = dot_lib_paths()[1],
-    upgrade = NA,         # check pkgs == "local::."
-    dependencies = NULL,  # check pkgs == "local::."
-    update = TRUE,
-    sysreqs = FALSE,
-    echo = FALSE,
-    lib_create = lib,
-    lib_install = lib,
-    repos = "https://cloud.r-project.org",
-    extra_messages = TRUE,
-    ...
+  pkgs,
+  lib = dot_lib_paths()[1],
+  upgrade = NA, # check pkgs == "local::."
+  dependencies = NULL, # check pkgs == "local::."
+  update = TRUE,
+  sysreqs = FALSE,
+  echo = FALSE,
+  lib_create = lib,
+  lib_install = lib,
+  repos = "https://cloud.r-project.org",
+  extra_messages = TRUE,
+  ...
 ) {
   op <- options(
     repos = c(CRAN = repos),
@@ -431,14 +434,14 @@ pak_lockfile <- function(
 # wrapper for
 #> pak::pkg_install()
 pak_install <- function(
-    pkgs,
-    lib = dot_lib_paths()[1],
-    upgrade = NA,         # check pkgs == "local::."
-    dependencies = NULL,  # check pkgs == "local::."
-    sysreqs = FALSE,
-    repos = "https://cloud.r-project.org",
-    extra_messages = TRUE,
-    ...
+  pkgs,
+  lib = dot_lib_paths()[1],
+  upgrade = NA, # check pkgs == "local::."
+  dependencies = NULL, # check pkgs == "local::."
+  sysreqs = FALSE,
+  repos = "https://cloud.r-project.org",
+  extra_messages = TRUE,
+  ...
 ) {
   op <- options(
     repos = c(CRAN = repos),
@@ -486,12 +489,12 @@ pak_install <- function(
 # wrapper for
 #> pak::local_install_dev_deps()
 pak_dev <- function(
-    lib = dot_lib_paths()[1],
-    sysreqs = FALSE,
-    extra_messages = TRUE,
-    upgrade = TRUE,
-    dependencies = TRUE,
-    ...
+  lib = dot_lib_paths()[1],
+  sysreqs = FALSE,
+  extra_messages = TRUE,
+  upgrade = TRUE,
+  dependencies = TRUE,
+  ...
 ) {
   op <- options(pak.no_extra_messages = extra_messages)
   on.exit(options(op))
