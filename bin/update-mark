@@ -7,17 +7,20 @@ ca$add_description(
   "Installs R packages from github::jmbarbone"
 )
 ca$add_argument(
-  "-f", "--force",
+  "-f",
+  "--force",
   action = "flag",
   info = "Use the ?reinstall flag"
 )
 ca$add_argument(
-  "-d", "--dev",
+  "-d",
+  "--dev",
   action = "flag",
   info = "Install dev packages, too?"
 )
 ca$add_argument(
-  "-b", "--branch",
+  "-b",
+  "--branch",
   action = "list",
   default = "*release",
   info = "Branch to install from"
