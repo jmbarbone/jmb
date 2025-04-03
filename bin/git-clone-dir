@@ -86,10 +86,10 @@ def git_clone_dir(
     ```
     """
 
-    if not "/" in old_repo:
+    if "/" not in old_repo:
         raise ValueError("old_repo must be {username}/{repo}")
 
-    if not "/" in new_repo:
+    if "/" not in new_repo:
         raise ValueError("new_repo must be {username}/{repo}")
 
     if create:
