@@ -1,0 +1,108 @@
+#!/usr/bin/env Rscript
+ca <- commandArgs(TRUE)
+
+if ("-h" %in% ca || "--help" %in% ca) {
+  message(
+    paste(
+      "{scribe} installer",
+      "",
+      "DESCRIPTION",
+      "  Installs {scribe}",
+      "",
+      "USAGE",
+      "  scribe [-h,--help]",
+      "  scribe [source] [-f] [--loc [ARG]]",
+      "",
+      "ARGUMNETS",
+      "  -h,--help    prints this and quietly exits",
+      "  source       sets source [cran|github]",
+      "  -f           forces installation when {scribe} is found",
+      "  --lib [ARG]  sets library location for package installation",
+      "",
+      "",
+      "EXAMPLES",
+      "  scribe-install",
+      "  scribe-install github",
+      "  scribe-install cran -f",
+      "  scribe-install github --lib ~/my-cool-library",
+      "",
+      sep = "\n"
+    )
+  )
+  quit("no")
+}
+
+is_missing <- function(x) {
+  (length(x) == 1L && is.integer(x) && is.na(x))
+}
+
+m <- match("-f", ca)
+
+if (is_missing(m)) {
+  overwrite <- FALSE
+} else {
+  ca <- ca[-m]
+  overwrite <- TRUE
+}
+m <- match("--lib", ca)
+
+if (is_missing(m)) {
+  lib <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
+} else {
+  lib <- ca[m + 1L]
+  ca <- ca[-c(m, m + 1L)]
+}
+
+stopifnot(nzchar(lib))
+lib <- normalizePath(lib, "/", mustWork = FALSE)
+dir.create(lib, recursive = TRUE, showWarnings = FALSE)
+
+exists <- tryCatch(
+  file.exists(find.package("scribe", lib = lib)),
+  packageNotFoundError = function(e) FALSE
+)
+
+if (exists && !overwrite) {
+  stop(
+    "{scribe} already exists at ", 
+    lib,
+    "\nto force installation, use '-f'",
+    call. = FALSE
+  )
+}
+
+if (length(ca) == 0L) {
+  ca <- "cran"
+} else if (length(ca) > 1L) {
+  warning(
+    "ignoring additional arguments: ", 
+    toString(ca), 
+    call. = FALSE, 
+    immediate. = TRUE
+  )
+}
+
+switch(
+  tolower(ca[1L]),
+  cran = {
+    message("i installing {scribe}")
+    utils::install.packages(
+      "scribe",
+      repos = c(CRAN = "https://cran.rstudio.com/"),
+      lib = lib
+    )
+  },
+  github = {
+    # TODO include ref
+    remotes::install_github(
+      "jmbarbone/scribe",
+      repos = c(CRAN = "https://cran.rstudio.com/"),
+      lib = lib
+    )
+  },
+  stop("source not recognized: ", ca[1L], call. = FALSE)
+)
+
+message("i checking installation")
+requireNamespace("scribe", lib)
+message("i all done")
