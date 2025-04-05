@@ -11,13 +11,14 @@ if ("-h" %in% ca || "--help" %in% ca) {
       "",
       "USAGE",
       "  scribe [-h,--help]",
-      "  scribe [source] [-f] [--loc [ARG]]",
+      "  scribe [source] [-f] [--loc [ARG]] [--ref [ARG]]",
       "",
       "ARGUMNETS",
       "  -h,--help    prints this and quietly exits",
       "  source       sets source [cran|github]",
       "  -f           forces installation when {scribe} is found",
       "  --lib [ARG]  sets library location for package installation",
+      "  --ref [ARG]  sets GitHub reference when source=github",
       "",
       "",
       "EXAMPLES",
@@ -48,6 +49,15 @@ m <- match("--lib", ca)
 
 if (is_missing(m)) {
   lib <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
+} else {
+  lib <- ca[m + 1L]
+  ca <- ca[-c(m, m + 1L)]
+}
+
+m <- match("--ref", ca)
+
+if (is_missing(m)) {
+  ref <- "HEAD"
 } else {
   lib <- ca[m + 1L]
   ca <- ca[-c(m, m + 1L)]
@@ -97,7 +107,8 @@ switch(
     remotes::install_github(
       "jmbarbone/scribe",
       repos = c(CRAN = "https://cran.rstudio.com/"),
-      lib = lib
+      lib = lib,
+      ref = ref
     )
   },
   stop("source not recognized: ", ca[1L], call. = FALSE)
