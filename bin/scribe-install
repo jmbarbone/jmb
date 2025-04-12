@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 ca <- commandArgs(TRUE)
 
-if ("-h" %in% ca || "--help" %in% ca) {
+if (!length(ca) || "-h" %in% ca || "--help" %in% ca) {
   message(
     paste(
       "{scribe} installer",
@@ -19,7 +19,6 @@ if ("-h" %in% ca || "--help" %in% ca) {
       "  -f           forces installation when {scribe} is found",
       "  --lib [ARG]  sets library location for package installation",
       "  --ref [ARG]  sets GitHub reference when source=github",
-      "",
       "",
       "EXAMPLES",
       "  scribe-install",
