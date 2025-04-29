@@ -24,5 +24,6 @@ ca$add_argument(
   action = "flag",
   info = "see ?mark::fixmes"
 )
+
 args <- ca$parse()
 do.call(mark::fixmes, args)
