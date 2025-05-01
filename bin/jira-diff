@@ -30,7 +30,8 @@ ca$add_argument(
   })
 )
 ca$add_argument(
-  "-u", "--username",
+  "-u",
+  "--username",
   info = "Jira username",
   default = Sys.getenv("JIRA_USERNAME"),
   convert = function(x) {
@@ -42,7 +43,8 @@ ca$add_argument(
   }
 )
 ca$add_argument(
-  "-p", "--password",
+  "-p",
+  "--password",
   info = "Jira token/password",
   default = Sys.getenv("JIRA_TOKEN", Sys.getenv("JIRA_PASSWORD")),
   convert = function(x) {
@@ -54,7 +56,8 @@ ca$add_argument(
   }
 )
 ca$add_argument(
-  "-d", "--domain",
+  "-d",
+  "--domain",
   info = "Jira domain",
   default = Sys.getenv("JIRA_DOMAIN")
 )
@@ -100,8 +103,8 @@ data <-
 values <-
   data$changelog$histories |>
   map("items") |>
-  map(~map_chr(.x, "field")) |>
-  map_lgl(~identical(.x, "description")) |>
+  map(~ map_chr(.x, "field")) |>
+  map_lgl(~ identical(.x, "description")) |>
   which()
 
 # prevents errors, but should probably be handled with an informative message

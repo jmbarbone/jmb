@@ -9,21 +9,23 @@ ca$add_argument(
   info = "Show only files matching this regular expression"
 )
 ca$add_argument(
-  "-g", "--glob",
+  "-g",
+  "--glob",
   info = "Interpret pattern as a glob pattern",
   action = "flag"
 )
 ca$add_argument(
-  "-i", "--invert",
+  "-i",
+  "--invert",
   info = "Invert the match",
   action = "flag",
   default = FALSE
 )
 
 path_ls <- function(
-    pattern = NULL,
-    glob = FALSE,
-    invert = FALSE
+  pattern = NULL,
+  glob = FALSE,
+  invert = FALSE
 ) {
   paths <- strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1]]
   res <- suppressWarnings(fs::dir_ls(paths, fail = FALSE))

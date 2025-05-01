@@ -2,8 +2,6 @@
 
 # This script is meant to be called ./configure, so I don't assume {scribe} is available
 
-
-
 scribe_lib <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
 dir.create(scribe_lib, recursive = TRUE, showWarnings = FALSE)
 
@@ -68,7 +66,8 @@ ca$add_argument(
   info = "library path to install pak to"
 )
 ca$add_argument(
-  "-f", "--force",
+  "-f",
+  "--force",
   action = "flag",
   info = "Force installation, even if pak is already installed"
 )
@@ -90,7 +89,9 @@ if (requireNamespace("pak", args$lib_path, quietly = TRUE)) {
 
 # if on linux, check for build-essential
 if (startsWith(args$os, "linux")) {
-  if (system2("dpkg", "-s build-essential", stdout = FALSE, stderr = FALSE) != 0) {
+  if (
+    system2("dpkg", "-s build-essential", stdout = FALSE, stderr = FALSE) != 0
+  ) {
     stop(
       "q need to install build-essential, please run the following command:\n",
       "$ sudo apt install build-essential"

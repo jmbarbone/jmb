@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # Find and open an Rproj files
-# 
+#
 # This assumes either $R_USER or $HOME/Documents have Bitbucket or Github
 # folders.  This also only searches for the matching $1.Rproj file -- ignores
 # whatever the folder name may be.
@@ -104,8 +104,8 @@ if (startsWith(params$name, "local::")) {
     Rproj = {
       fs_dir_ls(
         homedir,
-        glob = paste0("*", params$name, ".Rproj"), 
-        type = "file", 
+        glob = paste0("*", params$name, ".Rproj"),
+        type = "file",
         recurse = params$recurse
       )
     },
@@ -116,6 +116,6 @@ if (startsWith(params$name, "local::")) {
       recurse = TRUE
     )
   )
-  
+
   do_open(path)
 }

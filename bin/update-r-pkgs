@@ -59,13 +59,18 @@ pkgs <- pkgs[ok]
 n <- sum(lengths(pkgs))
 if (args$verbose) {
   msg(
-    "Old packages found: (", n, ")",
+    "Old packages found: (",
+    n,
+    ")",
     vapply(
       seq_along(libs),
       function(i) {
         paste0(
           "\n  ",
-          libs[i], " (", length(pkgs[[i]]), ")",
+          libs[i],
+          " (",
+          length(pkgs[[i]]),
+          ")",
           paste0("\n    ", pkgs[[i]], collapse = ""),
           collapse = ""
         )

@@ -3,3 +3,4 @@
 ignore/*
 .databricks/project.json
 .Rproj.user
+/.venv
