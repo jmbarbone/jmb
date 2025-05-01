@@ -27,7 +27,7 @@ ca$add_argument(
   action = "dots",
   default = "cran",
   options = list(choices = c("cran", "source")),
-  info = "Source to install"
+  info = "Source to install: either 'cran' or 'source'"
 )
 ca$add_argument(
   "--pkg-type",
@@ -40,7 +40,8 @@ ca$add_argument(
 )
 ca$add_argument(
   "--arch",
-  default = R.Version()$arch
+  default = R.Version()$arch,
+  info = "architecture (cpu)"
 )
 ca$add_argument(
   "-d",
@@ -52,7 +53,7 @@ ca$add_argument(
   "--reinstall",
   default = FALSE,
   action = "flag",
-  info = "pak pak pak"
+  info = "Run `pak::pak('pak')`"
 )
 ca$add_argument(
   "--extra-messages",
@@ -113,7 +114,12 @@ switch(
       args$arch
     )
     text <- "pre-built binary"
-  }
+  },
+  stop(
+    "Source not recognized: ", 
+    args$source,
+    "Should be one of: 'cran', 'source'"
+  )
 )
 
 message("i checking for libpath: ", normalizePath(args$lib_path, "/", FALSE))
