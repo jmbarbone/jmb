@@ -117,7 +117,7 @@ switch(
     text <- "pre-built binary"
   },
   stop(
-    "Source not recognized: ", 
+    "Source not recognized: ",
     args$source,
     "Should be one of: 'cran', 'source'"
   )
