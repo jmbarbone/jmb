@@ -1,5 +1,5 @@
 #!/usr/bin/env -S Rscript --vanilla
-#
+
 # Find `TODO` notes in your files using `mark::todos()`
 
 library(scribe, lib.loc = Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"))
