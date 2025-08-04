@@ -59,13 +59,13 @@ ca$add_argument(
   "-d",
   "--domain",
   info = "Jira domain",
-  default = Sys.getenv("JIRA_DOMAIN")
+  default = Sys.getenv("JIRA_DOMAIN"),
+  convert = scribe_convert("none")
 )
 ca$add_argument(
   "-n",
   info = "Which latest change (1 = most recent, 2 = second most recent, ...)",
-  default = 1L,
-  convert = scribe_convert("evaluate")
+  default = 1L
 )
 
 args <- ca$parse()
@@ -82,6 +82,10 @@ stopifnot(
   nzchar(args$domain),
   args$n > 0L
 )
+
+if (!startsWith("https://", args$domain)) {
+  args$domain <- paste0("https://", args$domain)
+}
 
 api_url <- sprintf(
   "%s/rest/api/2/issue/%s?expand=changelog",
