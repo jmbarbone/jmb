@@ -174,7 +174,7 @@ args <- try(silent = TRUE, {
   ca$add_argument(
     "--dev",
     action = "flag",
-    info = "install only local package dependencies"
+    info = "Install only local package dependencies."
   )
   ca$add_argument(
     "-e",
@@ -305,7 +305,7 @@ if (
 
 if (args$update_scribe) {
   print_eval(
-    pak,
+    pkg_install,
     pkg = "scribe",
     lib = lib_scribe,
     upgrade = TRUE
@@ -315,7 +315,7 @@ if (args$update_scribe) {
 
 if (args$update_scribe_dev) {
   print_eval(
-    pak,
+    pkg_install,
     pkg = "github::jmbarbone/scribe",
     lib = lib_scribe,
     upgrade = TRUE
@@ -324,6 +324,7 @@ if (args$update_scribe_dev) {
 }
 
 scribe_version <- try(packageVersion("scribe"), silent = TRUE)
+
 if (
   inherits(scribe_version, "try-error") ||
     scribe_version < SCRIBE_VERSION
@@ -350,6 +351,10 @@ if (fail) {
     file = stderr()
   )
   quit()
+}
+
+if (identical(commandArgs(TRUE), character())) {
+  args$dev <- TRUE
 }
 
 # wrapper for:
