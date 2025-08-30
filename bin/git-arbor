@@ -16,13 +16,13 @@ git fetch --all --prune
 case $more in
   0)
     git branch --merged \
-      | grep -Ev "(^\*|master|main|dev)" \
+      | grep -Ev "(^\*|master|main)" \
       | xargs git branch -d
     ;;
   1)
     echo "more"
     git branch -r --merged \
-      | grep -Ev "(^\*|master|main|dev|release)" \
+      | grep -Ev "(^\*|master|main|release)" \
       | xargs git branch -r -d
     ;;
   2)
