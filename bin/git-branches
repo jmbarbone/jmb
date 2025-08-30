@@ -1,0 +1,16 @@
+#! /usr/bin/env bash
+
+if [ $? -ne 0 ]
+then
+    # If 'git rev-parse' failed, probably we are not in a git repo, fail now
+    exit 1
+fi
+
+
+git for-each-ref \
+  --color \
+  --sort=-committerdate \
+  --count 20 \
+  --format='%(color:magenta)%(align:32,left)%(refname:short) %(color:red)%(upstream:track,nobracket) %(end) %(color:cyan)%(align:9,right)%(ahead-behind:HEAD)%(end) %(color:nobold yellow)%(align:13,right)%(committerdate:relative)%(end) %(color:green)%(align:20,left)%(authorname)%(end)%(color:white)%(align:64,left)%(contents:lines=1)%(end)' refs/heads/
+  # --format='%(color:bold magenta)%(align:25,left)%(refname:short) %(end) %(color:white)%(align:9,right)%(ahead-behind:HEAD)%(end) %(color:nobold yellow)%(align:35,left)%(committerdate:format:%Y-%d-%m %H:%M:%S) (%(committerdate:relative))%(end)%(color:green)%(align:24,left)%(authorname)%(end)%(color:green)%(align:64,left)%(contents:lines=1)%(end)' refs/heads/
+  # --format='%(color:bold magenta)%(align:30,left)%(refname:short) %(color:red)%(upstream:track,nobracket)%(end) %(color:white)%(align:15,right)%(ahead-behind:main)%(end) %(color:nobold yellow)%(align:35,left)%(committerdate:format:%Y-%d-%m %H:%M:%S) (%(committerdate:relative))%(end)%(color:green)%(align:24,left)%(authorname)%(end)%(color:green)%(align:64,left)%(contents:lines=1)%(end)' refs/heads/
