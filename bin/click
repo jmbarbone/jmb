@@ -2,7 +2,7 @@
 
 # click once every 20 seconds
 # for 200 instances
-xdotool
+ydotool
 click - -delay
 5000 - -repeat 200
 echo "... done"
