@@ -1,4 +1,4 @@
-#!/usr/bin/env -S Rscript --vanilla
+#! /usr/bin/env -S Rscript --vanilla
 
 # Create a new RStudio project in the current directory
 

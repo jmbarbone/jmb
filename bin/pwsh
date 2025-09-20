@@ -1,4 +1,4 @@
-#!/bin/env sh
+#! /bin/env sh
 
 if [ ! -f "$1" ]; then 
     exec "$(command -v pwsh.exe || command -v powershell.exe)" "$@"

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#! /usr/bin/env bash
 #
 # This scipt is used to migrate a repository from Bitbucket to Github.
 # Navigate to the current directory of the repository and execute this script.

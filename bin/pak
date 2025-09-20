@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#! /usr/bin/env Rscript
 
 # nolint next: object_name_linter.
 SCRIBE_VERSION <- "0.3.0"

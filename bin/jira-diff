@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#! /usr/bin/env Rscript
 
 scribe_lib <- Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library")
 stopifnot(packageVersion("scribe", scribe_lib) >= package_version("0.3.0"))

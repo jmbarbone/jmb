@@ -1,4 +1,4 @@
-#!/usr/bin/env -S Rscript
+#! /usr/bin/env -S Rscript
 #
 # Find `FIXMES` notes in your files using `mark::fixmes()`
 

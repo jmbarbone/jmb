@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#! /usr/bin/env Rscript
 
 scribe <- file.path(
   Sys.getenv("R_LIBS_SCRIBE", "~/R/scribe-library"),

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#! /usr/bin/env bash
 
 # https://linuxize.com/post/how-to-rename-local-and-remote-git-branch/
 # Because I can never be bothered to remember this

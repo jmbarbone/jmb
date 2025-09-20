@@ -1,4 +1,4 @@
-#!/usr/bin/env -S Rscript --vanilla
+#! /usr/bin/env -S Rscript --vanilla
 
 main <- function(path = ".", verbose = FALSE) {
   # define function so we don't have to keep checking verbose
