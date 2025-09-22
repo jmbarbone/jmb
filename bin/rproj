@@ -1,7 +1,7 @@
 #! /usr/bin/env Rscript
 # Find and open an Rproj files
 #
-# This assumes either $R_USER or $HOME/Documents have Bitbucket or Github
+# This assumes either $R_USER or $HOME/Documents have Bitbucket or GitHub
 # folders.  This also only searches for the matching $1.Rproj file -- ignores
 # whatever the folder name may be.
 

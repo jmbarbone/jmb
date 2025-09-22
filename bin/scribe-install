@@ -13,7 +13,7 @@ if (!length(ca) || "-h" %in% ca || "--help" %in% ca) {
       "  scribe [-h,--help]",
       "  scribe [source] [-f] [--loc [ARG]] [--ref [ARG]]",
       "",
-      "ARGUMNETS",
+      "ARGUMENTS",
       "  -h,--help    prints this and quietly exits",
       "  source       sets source [cran|github]",
       "  -f           forces installation when {scribe} is found",

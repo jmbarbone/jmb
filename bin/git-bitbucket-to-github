@@ -1,9 +1,9 @@
 #! /usr/bin/env bash
 #
-# This scipt is used to migrate a repository from Bitbucket to Github.
+# This script is used to migrate a repository from Bitbucket to GitHub.
 # Navigate to the current directory of the repository and execute this script.
 # A temporary directory will be created and the repository will be cloned to
-# that directory. The repository will then be pushed to Github.
+# that directory. The repository will then be pushed to GitHub.
 #
 # some other info here:
 # https://gitprotect.io/blog/how-to-migrate-from-bitbucket-to-github/
@@ -233,7 +233,7 @@ git remote add origin $new # add new origin
 git push --set-upstream origin main --repo $new
 if [[ $? != 0 ]]
 then
-  echo "ERRROR could not push to github"
+  echo "ERROR could not push to github"
   do_exit 6
 fi
 
