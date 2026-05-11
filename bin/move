@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+# wiggle mouse every 30 seconds
+
+help() {
+  echo "wiggle mouse every 30 seconds"
+  echo ""
+  echo "Usage: move"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help    Show this help message"
+  echo "  -s, --sleep   Sleep duration between wiggles (default: 30 seconds)"
+  echo "  -r, --repeat  Number of times to repeat the wiggle (default: 10)"
+  echo "Example:"
+  echo "  move -s 60 -r 5   # Wiggle mouse every 60 seconds for 5 times"
+  exit 0
+}
+
+# check arguments
+SLEEP=30
+REPEAT=10
+while [[ $# -gt 0 ]]
+do
+  case $1 in
+    -h|--help)
+      help
+      ;;
+    -s|--sleep)
+      SLEEP="$2"
+      shift 2
+      ;;
+    -r|--repeat)
+      REPEAT="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown option: $1"
+      help
+      ;;
+  esac
+done
+
+for i in $(seq 1 $REPEAT)
+do
+  xdotool mousemove_relative --polar 0 1
+  xdotool mousemove_relative --polar 90 1
+  xdotool mousemove_relative --polar 180 1
+  xdotool mousemove_relative --polar 270 1
+  echo "wiggle ($i/${REPEAT}) [$((SLEEP * (REPEAT - i)))s]"
+  sleep ${SLEEP}
+done
+
+echo "... done" 
+exit 0
