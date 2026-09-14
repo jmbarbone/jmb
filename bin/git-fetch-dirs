@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+find . \
+    -mindepth 1 \
+    -maxdepth 2 \
+    -type d \
+    -exec git --git-dir={}/.git --work-tree=$PWD/{} fetch --all --prune \;
+
+# ls | xargs -I{} git -C {} pull
+# ls | xargs -I{} git -C {} fetch --all --prune
