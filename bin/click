@@ -1,9 +1,51 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
-# click once every 20 seconds
-# for 200 instances
-ydotool
-click - -delay
-5000 - -repeat 200
-echo "... done"
+# click mouse every 30 seconds
+
+help() {
+  echo "click mouse every 30 seconds"
+  echo ""
+  echo "Usage: click"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help    Show this help message"
+  echo "  -s, --sleep   Sleep duration between clicks (default: 30 seconds)"
+  echo "  -r, --repeat  Number of times to repeat the click (default: 10)"
+  echo "Example:"
+  echo "  click -s 60 -r 5   # click mouse every 60 seconds for 5 times"
+  exit 0
+}
+
+# check arguments
+SLEEP=30
+REPEAT=10
+while [[ $# -gt 0 ]]
+do
+  case $1 in
+    -h|--help)
+      help
+      ;;
+    -s|--sleep)
+      SLEEP="$2"
+      shift 2
+      ;;
+    -r|--repeat)
+      REPEAT="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown option: $1"
+      help
+      ;;
+  esac
+done
+
+for i in $(seq 1 $REPEAT)
+do
+  xdotool click 1
+  echo "click ($i/${REPEAT}) [$((SLEEP * (REPEAT - i)))s]"
+  sleep ${SLEEP}
+done
+
+echo "... done" 
 exit 0
