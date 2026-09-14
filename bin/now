@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+# format time as YYYY-MM-DD HH:MM:SS
+echo $(date +%F\ %T)
