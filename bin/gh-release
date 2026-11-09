@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+
+set -e
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") -n NEW_TAG [-p PREVIOUS_TAG] [-b BRANCH] [--dry-run]
+  -n, --new       Tag for the new release (required)
+  -p, --previous  Previous tag to compare against
+                  (default: latest tag reachable from BRANCH)
+  -b, --branch    Target branch (default: main)
+  -d, --dry-run   Print the release notes without creating the release
+  --prerelease, --no-prerelease
+                  Mark as a pre-release (default: --no-prerelease)
+  --draft, --no-draft
+                  Create as a draft (default: --draft)
+  --latest, --no-latest
+                  Mark as the latest release (default: --no-latest)
+  -h, --help      Show this help
+EOF
+}
+
+NEW_TAG=""
+PREVIOUS_TAG=""
+TARGET_COMMITISH="main"
+DRY_RUN=false
+PRERELEASE=false
+DRAFT=true
+LATEST=false
+
+while [[ $# -gt 0 ]]
+do
+    case "$1" in
+        -n|--new)        NEW_TAG="$2"; shift 2 ;;
+        -p|--previous)   PREVIOUS_TAG="$2"; shift 2 ;;
+        -b|--branch)     TARGET_COMMITISH="$2"; shift 2 ;;
+        -d|--dry-run)    DRY_RUN=true; shift ;;
+        --prerelease)    PRERELEASE=true; shift ;;
+        --no-prerelease) PRERELEASE=false; shift ;;
+        --draft)         DRAFT=true; shift ;;
+        --no-draft)      DRAFT=false; shift ;;
+        --latest)        LATEST=true; shift ;;
+        --no-latest)     LATEST=false; shift ;;
+        -h|--help)       usage; exit 0 ;;
+        *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
+    esac
+done
+
+if [[ -z "$NEW_TAG" ]]
+then
+    echo "Error: --new is required" >&2
+    usage >&2
+    exit 1
+fi
+
+# Default previous tag: most recent tag reachable from the branch
+if [[ -z "$PREVIOUS_TAG" ]]
+then
+    PREVIOUS_TAG=$(git describe --tags --abbrev=0 "$TARGET_COMMITISH" 2>/dev/null || echo "")
+fi
+
+echo "Target branch: $TARGET_COMMITISH"
+echo "Previous tag:  $PREVIOUS_TAG"
+echo "New tag:       $NEW_TAG"
+
+# Collect PR entries merged into the branch since the previous tag
+RELEASE_NOTES="## What's Changed in $TARGET_COMMITISH\n"
+
+if [ -n "$PREVIOUS_TAG" ]
+then
+    MERGE_COMMITS=$(git log "${PREVIOUS_TAG}..${TARGET_COMMITISH}" --merges --oneline)
+else
+    MERGE_COMMITS=$(git log "$TARGET_COMMITISH" --merges --oneline)
+fi
+
+# Isolate GitHub's standard "Merge pull request #123 from ..." format
+PR_COUNT=0
+while read -r commit
+do
+    if [[ -z "$commit" ]]
+    then
+        continue
+    fi
+
+    if [[ "$commit" =~ "Merge pull request #"([0-9]+) ]]
+    then
+        PR_NUM="${BASH_REMATCH[1]}"
+
+        PR_TITLE=$(gh pr view "$PR_NUM" --json title --template '{{.title}}')
+        PR_AUTHOR=$(gh pr view "$PR_NUM" --json author --template '{{.author.login}}')
+
+        RELEASE_NOTES="${RELEASE_NOTES}\n* ${PR_TITLE} by @${PR_AUTHOR} in #${PR_NUM}"
+        PR_COUNT=$((PR_COUNT + 1))
+    fi
+done <<< "$MERGE_COMMITS"
+
+if [ "$PR_COUNT" -eq 0 ]
+then
+    RELEASE_NOTES="${RELEASE_NOTES}\n* No Pull Requests directly merged into this branch since last tag."
+fi
+
+if [ -n "$PREVIOUS_TAG" ]
+then
+    REPO_URL=$(gh repo view --json url --jq '.url')
+    RELEASE_NOTES="${RELEASE_NOTES}\n\n**Full Changelog**: ${REPO_URL}/compare/${PREVIOUS_TAG}...${NEW_TAG}"
+fi
+
+echo -e "Generated Notes:\n$RELEASE_NOTES"
+
+if [ "$DRY_RUN" = true ]
+then
+    echo "Dry run: release $NEW_TAG not created."
+    exit 0
+fi
+
+RELEASE_URL=$(
+    gh release create "$NEW_TAG" \
+        --target "$TARGET_COMMITISH" \
+        --title "Release $NEW_TAG" \
+        --prerelease="$PRERELEASE" \
+        --draft="$DRAFT" \
+        --latest="$LATEST" \
+        --notes "$(echo -e "$RELEASE_NOTES")"
+)
+
+echo "Release created: $RELEASE_URL"
+
+exit 0
