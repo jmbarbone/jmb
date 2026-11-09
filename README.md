@@ -1,8 +1,8 @@
 # jmb
 
-Jordan's main bin
+Jordan's Main Bin
 
-Contains some scripts that make Jordan's life a little easier.
+This repo contains scripts that make Jordan's (me) life a little easier.
 
 To start, set your the current working directory to this repo, then:
 
@@ -10,7 +10,7 @@ To start, set your the current working directory to this repo, then:
 bash ./configure
 ```
 
-Respond to any prompts needed and have fun.
+Respond to any prompts and have fun.
 
 ## Examples
 
@@ -19,7 +19,7 @@ Respond to any prompts needed and have fun.
 
 Update **R** packages with [`{pak}`](https://github.com/r-lib/pak)
 
-``` sh
+```sh
 pak mark
 ```
 
@@ -28,7 +28,7 @@ pak mark
 Installs [`{pak}`](https://github.com/r-lib/pak).
 Either the CRAN release or a developmental version.
 
-``` sh
+```sh
 pak-install
 ```
 
@@ -36,7 +36,7 @@ pak-install
 
 Tries to update _old_ R packages using [`{pak}`](https://github.com/r-lib/pak).
 
-``` sh
+```sh
 update-r-pkgs
 ```
 
